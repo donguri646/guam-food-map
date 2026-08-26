@@ -17,10 +17,10 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
 </style>
 <style>
 .mapWrap{position:relative;height:520px;overflow:hidden;background:#c9e8ee;touch-action:none}
-.tileMap{position:absolute;inset:0;overflow:hidden;background:#c9e8ee;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tileMap{position:absolute;inset:0;overflow:hidden;background:#c9e8ee;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;user-select:none;-webkit-touch-callout:none}
 .tileMap.dragging{cursor:grabbing}
 .tile{position:absolute;width:256px;height:256px;user-select:none;-webkit-user-drag:none;pointer-events:none}
-.pinLayer{position:absolute;inset:0;pointer-events:none}
+.pinLayer{position:absolute;inset:0;pointer-events:none;will-change:transform}
 .mapPin{position:absolute;transform:translate(-50%,-100%);width:28px;height:34px;border:2px solid #fff;border-radius:50% 50% 50% 0;background:#078d86;color:#fff;box-shadow:0 2px 6px #0006;pointer-events:auto;padding:0;z-index:20;cursor:pointer}
 .mapPin span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:9px;font-weight:900;transform:rotate(45deg)}
 .mapStatus{position:absolute;left:12px;top:12px;right:12px;display:flex;justify-content:space-between;z-index:30;pointer-events:none}
@@ -67,10 +67,14 @@ const DATA=[{"id":1,"name":"The Kracked Egg","meal":"朝食","menu":"エッグ�
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let current=DATA;
 
+
 const mapEl=document.getElementById("tileMap");
 const pinEl=document.getElementById("pinLayer");
 let zoom=11, center={lat:13.505,lng:144.800};
-let dragging=false,last={x:0,y:0},pointers=new Map(),pinchStartDist=0,pinchStartZoom=11,pinchStartCenter=null,lastTap=0;
+let targetZoom=11,targetCenter={lat:13.505,lng:144.800};
+let dragging=false,last={x:0,y:0},pointers=new Map();
+let pinchStartDist=0,pinchStartZoom=11,pinchAnchor=null;
+let worldOrigin={x:0,y:0}, tileKey="";
 
 function clampLat(lat){return Math.max(-85.05112878,Math.min(85.05112878,lat));}
 function worldSize(z){return 256*Math.pow(2,z);}
@@ -84,30 +88,52 @@ function unproject(x,y,z=zoom){
   return {lng,lat:180/Math.PI*Math.atan(Math.sinh(yy))};
 }
 function tileUrl(x,y,z){
-  const n=2**z;
-  x=((x%n)+n)%n;
+  const n=2**z;x=((x%n)+n)%n;
   return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 }
-function renderMap(){
+function ensureTileLayer(){
+  let layer=document.getElementById("tileLayer");
+  if(!layer){
+    layer=document.createElement("div");
+    layer.id="tileLayer";
+    layer.style.cssText="position:absolute;inset:0;will-change:transform;pointer-events:none;-webkit-transform:translateZ(0);transform:translateZ(0);";
+    mapEl.appendChild(layer);
+  }
+  return layer;
+}
+function rebuildTiles(){
+  const layer=ensureTileLayer(), z=zoom, c=project(center.lat,center.lng,z);
+  const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256);
+  const key=z+":"+tx+":"+ty;
+  if(key===tileKey)return;
+  tileKey=key;
+  layer.innerHTML="";
+  for(let yy=ty-3;yy<=ty+3;yy++){
+    for(let xx=tx-3;xx<=tx+3;xx++){
+      const img=new Image();
+      img.draggable=false;img.className="tile";
+      img.src=tileUrl(xx,yy,z);
+      img.style.left=(xx*256)+"px";
+      img.style.top=(yy*256)+"px";
+      layer.appendChild(img);
+    }
+  }
+}
+function updateTransform(){
   const w=mapEl.clientWidth,h=mapEl.clientHeight;
   if(!w||!h)return;
   const c=project(center.lat,center.lng,zoom);
   const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256);
   const ox=w/2-c.x,oy=h/2-c.y;
-  mapEl.innerHTML="";
-  for(let yy=ty-2;yy<=ty+2;yy++){
-    for(let xx=tx-2;xx<=tx+2;xx++){
-      const img=new Image();
-      img.draggable=false;
-      img.src=tileUrl(xx,yy,zoom);
-      img.className="tile";
-      img.style.left=(xx*256+ox)+"px";
-      img.style.top=(yy*256+oy)+"px";
-      img.onerror=()=>img.remove();
-      mapEl.appendChild(img);
-    }
-  }
+  const layer=ensureTileLayer();
+  layer.style.transform=`translate3d(${ox}px,${oy}px,0)`;
+  pinEl.style.transform="translate3d(0,0,0)";
+  worldOrigin={x:c.x,y:c.y,ox,oy,tx,ty};
   renderPins();
+}
+function renderMap(){
+  rebuildTiles();
+  updateTransform();
 }
 function renderPins(){
   if(!pinEl)return;
@@ -117,37 +143,103 @@ function renderPins(){
   current.forEach(d=>{
     if(d.lat==null||d.lng==null)return;
     const p=project(Number(d.lat),Number(d.lng),zoom);
-    let x=p.x-c.x+w/2,y=p.y-c.y+h/2;
-    if(x<-40||x>w+40||y<-60||y>h+20)return;
+    const x=p.x-c.x+w/2,y=p.y-c.y+h/2;
+    if(x<-50||x>w+50||y<-70||y>h+30)return;
     const i=DATA.indexOf(d);
     const b=document.createElement("button");
-    b.className="mapPin";
-    b.type="button";
-    b.title=d.name;
+    b.className="mapPin";b.type="button";b.title=d.name;
     b.style.left=x+"px";b.style.top=y+"px";
     b.innerHTML="<span>"+(i+1)+"</span>";
     b.onclick=e=>{e.stopPropagation();focusStore(i);};
     pinEl.appendChild(b);
   });
 }
-function setCenter(lat,lng){
-  center={lat:clampLat(Number(lat)),lng:Number(lng)};
-  renderMap();
-}
+function setCenter(lat,lng){center={lat:clampLat(Number(lat)),lng:Number(lng)};tileKey="";renderMap();}
 function zoomAt(newZoom,px,py){
-  newZoom=Math.max(9,Math.min(17,Math.round(newZoom)));
-  if(newZoom===zoom)return;
-  const before=unproject(project(center.lat,center.lng,zoom).x,project(center.lat,center.lng,zoom).y,zoom);
-  const c=project(center.lat,center.lng,zoom);
-  const worldX=c.x+(px-mapEl.clientWidth/2);
-  const worldY=c.y+(py-mapEl.clientHeight/2);
-  const target=unproject(worldX,worldY,zoom);
-  const oldZoom=zoom; zoom=newZoom;
-  const t=project(target.lat,target.lng,zoom);
-  const nc=unproject(t.x-(px-mapEl.clientWidth/2),t.y-(py-mapEl.clientHeight/2),zoom);
+  newZoom=Math.max(9,Math.min(17,Number(newZoom)));
+  if(Math.abs(newZoom-zoom)<0.001)return;
+  const old=project(center.lat,center.lng,zoom);
+  const worldX=old.x+(px-mapEl.clientWidth/2),worldY=old.y+(py-mapEl.clientHeight/2);
+  const anchor=unproject(worldX,worldY,zoom);
+  zoom=newZoom;
+  const a=project(anchor.lat,anchor.lng,zoom);
+  const nc=unproject(a.x-(px-mapEl.clientWidth/2),a.y-(py-mapEl.clientHeight/2),zoom);
   center={lat:nc.lat,lng:nc.lng};
+  tileKey="";
   renderMap();
 }
+function zoomByPinch(newZoom,mid){
+  const nz=Math.max(9,Math.min(17,newZoom));
+  const oldZoom=zoom;
+  if(Math.abs(nz-oldZoom)<0.001)return;
+  const oldCenter=project(center.lat,center.lng,oldZoom);
+  const wx=oldCenter.x+(mid.x-mapEl.clientWidth/2);
+  const wy=oldCenter.y+(mid.y-mapEl.clientHeight/2);
+  const anchor=unproject(wx,wy,oldZoom);
+  zoom=nz;
+  const a=project(anchor.lat,anchor.lng,zoom);
+  const nc=unproject(a.x-(mid.x-mapEl.clientWidth/2),a.y-(mid.y-mapEl.clientHeight/2),zoom);
+  center={lat:nc.lat,lng:nc.lng};
+  tileKey="";
+  renderMap();
+}
+
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function midpoint(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+
+mapEl.addEventListener("wheel",e=>{
+  e.preventDefault();zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY);
+},{passive:false});
+
+mapEl.addEventListener("pointerdown",e=>{
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  try{mapEl.setPointerCapture(e.pointerId)}catch(_){}
+  if(pointers.size===1){
+    dragging=true;last={x:e.clientX,y:e.clientY};mapEl.classList.add("dragging");
+  }else if(pointers.size===2){
+    const pts=[...pointers.values()];
+    pinchStartDist=distance(pts[0],pts[1]);pinchStartZoom=zoom;
+    pinchAnchor=midpoint(pts[0],pts[1]);dragging=false;
+  }
+});
+mapEl.addEventListener("pointermove",e=>{
+  if(!pointers.has(e.pointerId))return;
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size>=2){
+    const pts=[...pointers.values()],d=distance(pts[0],pts[1]);
+    if(pinchStartDist>0){
+      const mid=midpoint(pts[0],pts[1]);
+      const nz=pinchStartZoom+Math.log2(Math.max(.05,d/pinchStartDist));
+      zoomByPinch(nz,{x:mid.x-mapEl.getBoundingClientRect().left,y:mid.y-mapEl.getBoundingClientRect().top});
+    }
+    return;
+  }
+  if(!dragging)return;
+  const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};
+  const c=project(center.lat,center.lng,zoom);
+  const n=unproject(c.x-dx,c.y-dy,zoom);
+  center={lat:n.lat,lng:n.lng};
+  // Smooth: only translate the existing layers; do not rebuild tiles while dragging.
+  updateTransform();
+});
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if(pointers.size<2)pinchStartDist=0;
+  if(pointers.size===1){
+    const p=[...pointers.values()][0];dragging=true;last={x:p.x,y:p.y};
+  }else dragging=false;
+  if(!pointers.size)mapEl.classList.remove("dragging");
+  try{mapEl.releasePointerCapture(e.pointerId)}catch(_){}
+  if(!pointers.size){setTimeout(()=>{tileKey="";rebuildTiles();updateTransform();},0);}
+}
+mapEl.addEventListener("pointerup",endPointer);
+mapEl.addEventListener("pointercancel",endPointer);
+mapEl.addEventListener("dblclick",e=>{e.preventDefault();zoomAt(zoom+1,e.offsetX,e.offsetY);});
+
+document.getElementById("mapPlus").onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
+document.getElementById("mapMinus").onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
+document.getElementById("mapReset").onclick=()=>{zoom=11;center={lat:13.505,lng:144.800};tileKey="";renderMap();};
+window.addEventListener("resize",()=>{tileKey="";renderMap();});
 function focusStore(i){
   const d=DATA[i];
   if(d.lat&&d.lng){
