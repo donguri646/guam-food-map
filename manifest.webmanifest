@@ -1,9 +1,0 @@
-{
-  "name": "Guam Family Travel MAP",
-  "short_name": "Guam Travel MAP",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#fff9ed",
-  "theme_color": "#078d86",
-  "lang": "ja"
-}
