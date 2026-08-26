@@ -1,9 +1,20 @@
 {
   "name": "Guam Family Travel MAP",
   "short_name": "Guam Travel MAP",
+  "description": "iPhoneで見る、グアム旅行専用グルメ＆遊びMAP",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#fff9ed",
+  "orientation": "portrait",
+  "background_color": "#fffaf0",
   "theme_color": "#078d86",
-  "lang": "ja"
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
