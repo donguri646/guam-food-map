@@ -1,16 +1,5 @@
 {
-  "name": "Guam Family Travel MAP",
-  "short_name": "Guam MAP",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#fffdf7",
-  "theme_color": "#176f69",
-  "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+  "name":"Guam Family Travel MAP","short_name":"Guam MAP","start_url":"./index.html",
+  "display":"standalone","background_color":"#fffdf7","theme_color":"#176f69",
+  "icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
