@@ -36,7 +36,7 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
 .fullMap{position:absolute;right:12px;bottom:48px;z-index:30;text-decoration:none}
 @media(max-width:600px){.mapWrap{height:520px}.mapStatus span{font-size:9px}.mapHint{font-size:9px}}
 </style>
-</head><body>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/><style>#map{height:100%;width:100%;background:#c9e8ee}.leaflet-container{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;touch-action:none}.leaflet-control-zoom a{font-size:22px!important}.storePin{width:28px;height:34px;border:2px solid #fff;border-radius:50% 50% 50% 0;background:#078d86;color:#fff;box-shadow:0 2px 6px #0006;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;transform:rotate(-45deg)}.storePin span{transform:rotate(45deg)}</style></head><body>
 <header><h1>🌴 GUAM FAMILY TRAVEL MAP</h1><p>食べる・遊ぶ・朝市・ナイトマーケットをiPhoneでチェック</p></header>
 <nav class="tabs"><button class="active" data-tab="food">🍴 グルメ</button><button data-tab="play">🏝️ 遊ぶ</button><button data-tab="market">🧺 朝市・夜市</button><button data-tab="plan">📅 候補プラン</button></nav>
 
@@ -46,18 +46,10 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
 <div id="activeNote" class="activeNote">📍 すべての店舗</div>
 
 <div class="mapWrap" id="mapWrap">
-  <div id="tileMap" class="tileMap" aria-label="Guam detailed map">
-    <div id="mapWorld" class="mapWorld">
-      <div id="tileLayer" class="tileLayer"></div>
-      <div id="pinLayer" class="pinLayer"></div>
-    </div>
-  </div>
+  <div id="map" aria-label="Guam detailed map"></div>
   <div class="mapStatus"><span>🗺️ 実際の道路MAP</span><span>📍 1ピン＝1店舗</span></div>
-  <div class="mapHint">👆 スワイプで移動　・　ピンをタップ</div>
-  <button id="mapMinus" class="mapBtn minus" type="button">−</button>
-  <button id="mapPlus" class="mapBtn plus" type="button">＋</button>
+  <div class="mapHint">👆 スワイプで移動　・　🤏 2本指で拡大縮小　・　📍 ピンをタップ</div>
   <button id="mapReset" class="mapReset" type="button">🌴 グアム全体</button>
-  <div class="mapScale">© OpenStreetMap contributors</div>
   <a id="openFullMap" href="https://www.openstreetmap.org/#map=11/13.505/144.800" target="_blank" rel="noopener" class="fullMap">🗺️ 地図を大きく見る</a>
 </div>
 <div class="listHead"><b>🍴 お店一覧</b><span id="count"></span></div><div id="list"></div><div id="detail"></div>
@@ -69,184 +61,52 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
 
 
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const DATA=[{"id":1,"name":"The Kracked Egg","meal":"朝食","menu":"エッグベネディクト（スモークサーモン）／SOS Local Motion／ホットケーキメドレー／トロピカルディライト","price":"$10〜16","area":"Tumon / Tamuning","lat":13.5147,"lng":144.8048,"maps":"https://www.google.com/maps/search/?api=1&query=The+Kracked+Egg+Guam","official":"https://www.thekrackedegg.com/","emoji":"🥚","comment":"🌅 朝食の王道。Lox Florentineはスモークサーモン＋ほうれん草＋ポーチドエッグ＋オランデーズをイングリッシュマフィンに重ねたエッグベネディクト。塩気のあるサーモンと半熟卵、濃厚ソースの相性がよく、アメリカンブレックファストを楽しみたい日におすすめ。Hot Cake Medleyは3種類選べて家族でシェアしやすい。","image":"https://amurublog.com/wp-content/uploads/2020/05/IM-GUAM2072-730x410.jpg","genre":"アメリカン","genreEmoji":"🍖","family":true,"local":false,"areaShort":"タモン","image2":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_599%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/Kracked_Egg_e5a434c5-21c6-4800-a60c-1fef6383aff1.jpg"},{"id":2,"name":"Little Pika's","meal":"朝食","menu":"チャモロソーセージベネディクト／ロコモコ／カルーアフレンチトースト","price":"$12〜17","area":"Tumon","lat":13.5155,"lng":144.8056,"maps":"https://www.google.com/maps/search/?api=1&query=Little+Pika%27s+Guam","official":"https://www.pikascafeguam.com/","emoji":"🍳","comment":"🌅 Chamorroソーセージのベネディクトは、香ばしいソーセージ＋半熟卵＋オランデーズのローカル感ある朝食。ロコモコならご飯＋ハンバーグ＋グレービー＋卵でボリューム満点。キッズメニューもあり、家族旅行との相性が◎。","image":"https://ak-d.tripcdn.com/images/1mi3n224x8xibqqy701E8.jpg?proc=source%2Ftrip","genre":"チャモロ","genreEmoji":"🇬🇺","family":true,"local":true,"areaShort":"タモン","image2":"https://static.wixstatic.com/media/4f9262_02fcb761bc8b42e8a5cc868e76ddab83~mv2.jpg/v1/fill/w_811%2Ch_541%2Cal_c%2Cq_85%2Cusm_0.66_1.00_0.01%2Cenc_auto/4f9262_02fcb761bc8b42e8a5cc868e76ddab83~mv2.jpg"},{"id":3,"name":"Shirley's Restaurant","meal":"朝食","menu":"コーンドビーフハッシュ＋ポルトガルソーセージ＋卵／クラブサンド／スパイシースパムフライドライス","price":"$10〜20","area":"Apotgan","lat":13.4925,"lng":144.7988,"maps":"https://www.google.com/maps/search/?api=1&query=Shirley%27s+Restaurant+Guam","official":"https://www.facebook.com/shirleystamuning/","emoji":"🍳","comment":"🍳 グアムの家庭料理系ファミレス。コーンビーフハッシュは牛肉とポテトを香ばしく焼いて卵と合わせる定番。チャモロソーセージやガーリック系フライドライスもあり、ローカル食堂っぽい朝ごはんを食べたい人向け。","image":"","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"Apotgan","image2":"https://www.guam.co.kr/data/restaurant/144583274139874000.jpg"},{"id":4,"name":"King's Restaurants","meal":"朝食","menu":"ロコモコ／カドンピカ／パンケーキ／フライドライス","price":"$10〜20","area":"Harmon","lat":13.522,"lng":144.8225,"maps":"https://www.google.com/maps/search/?api=1&query=King%27s+Restaurants+Guam","official":"","emoji":"🍳","comment":"🍳 ロコモコは白ご飯＋ハンバーグ＋グレービー＋目玉焼きの太平洋エリア定番。肉＋ご飯＋卵で満足感が高く、朝からしっかり食べたい日にぴったり。パンケーキやフライドライスも家族で選びやすい。","image":"https://fs.tour.ne.jp/index.php/file_manage/disp_file/?fid=review%2F629%2F201911%2F14f49b55c5f5307cf5dba1100b84785c.jpg&w=1080","genre":"その他","genreEmoji":"🍴","family":true,"local":false,"areaShort":"Harmon"},{"id":5,"name":"Jack in the Box","meal":"ランチ","menu":"マンチーミール／Sourdough Jack／Classic Buttery Jack／カーリーフライ／タコス","price":"$10〜20","area":"Tamuning","lat":13.505,"lng":144.806,"maps":"https://www.google.com/maps/search/?api=1&query=Jack+in+the+Box+Guam","official":"https://www.jackinthebox.com/","emoji":"🍔","comment":"🍔 Sourdough Jackは香ばしいサワードウにビーフパティ、ベーコン、チーズ、トマトなどを合わせた看板系バーガー。カーリーフライやタコスも一緒に頼めるのでシェアしやすく、24時間営業の店舗は夜食候補にも便利。","image":"https://www.mashed.com/img/gallery/43-fast-food-items-you-need-to-eat-before-you-die/jack-in-the-boxs-sourdough-jack-1653333422.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":false,"areaShort":"Tamuning"},{"id":6,"name":"Panda Express","meal":"ランチ","menu":"オレンジチキン／ハニーセサミチキン／北京牛肉／ハニーウォルナッツシュリンプ／チャーハン","price":"$10〜20","area":"Hagåtña","lat":13.4748,"lng":144.751,"maps":"https://www.google.com/maps/search/?api=1&query=Panda+Express+Guam","official":"https://www.pandaexpress.com/","emoji":"🍊","comment":"🍊 オレンジチキンはカリッと揚げた鶏肉に甘酸っぱく濃いめのオレンジソースを絡めた定番。北京牛肉やチャーハンと組み合わせてプレートにでき、家族で好みが分かれても選びやすい。","image":"https://img.p.mapq.st/?q=75&url=https%3A%2F%2Fs3-media0.fl.yelpcdn.com%2Fbphoto%2FWgxqj-NdNblnPf4m-AzLOA%2Fl.jpg&w=3840","genre":"アメリカン","genreEmoji":"🍖","family":true,"local":false,"areaShort":"ハガニア"},{"id":7,"name":"Jollibee","meal":"ランチ","menu":"Chickenjoy／Jollyスパゲティ／グレイビーハンバーグ","price":"$10〜20","area":"Liguan","lat":13.482,"lng":144.824,"maps":"https://www.google.com/maps/search/?api=1&query=Jollibee+Guam","official":"https://www.jollibeeusa.com/","emoji":"🍗","comment":"🍗 Chickenjoyは衣がカリッとしたフライドチキンを濃厚グレービーにつけて食べるフィリピン発の看板。Jollyスパゲティは甘めのソースが特徴で子どもにも選びやすく、Peach Mango Pieまで含めて日本では少し珍しい味を楽しめる。","image":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_600%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/jol_6_a83d8779-dc4f-459e-a238-dc2d086b0003.jpg","genre":"フィリピン","genreEmoji":"🍗","family":true,"local":false,"areaShort":"Liguan","image2":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_600%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/jol_6_a83d8779-dc4f-459e-a238-dc2d086b0003.jpg"},{"id":8,"name":"Meskla Dos（Upper Tumon）","meal":"ランチ","menu":"Shrimp “Uhang” Burger／ファイヤークラッカースパイスバーガー／スイートポテトフライ","price":"$12〜19","area":"Upper Tumon","lat":13.524,"lng":144.81,"maps":"https://www.google.com/maps/search/?api=1&query=Meskla+Dos+Upper+Tumon+Guam","official":"https://mesklaguam.com/","emoji":"🍔","comment":"🍔 Uhang Burgerはエビのパティをパン粉で揚げ、タルタル系ソースで仕上げた名物級バーガー。普通のビーフバーガーとは違う、グアムらしいシーフード系バーガーを食べたいならここ。","image":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":true,"areaShort":"タモン","image2":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg"},{"id":9,"name":"Meskla Dos（Lower Tumon）","meal":"ランチ","menu":"Shrimp “Uhang” Burger＋スパイシーマヨ／チキンストリップ／ビーフ＆ボーンレスポークリブ","price":"$12〜19","area":"Lower Tumon","lat":13.51,"lng":144.805,"maps":"https://www.google.com/maps/search/?api=1&query=Meskla+Dos+Lower+Tumon+Guam","official":"https://mesklaguam.com/","emoji":"🍔","comment":"🍔 Shrimp Uhang Burgerはエビの旨味と揚げた香ばしさが主役。スイートポテトフライを合わせると甘じょっぱい組み合わせになり、シェアにも向く。ローカル食材を現代的なバーガーにした一品。","image":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":true,"areaShort":"タモン","image2":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg"},{"id":10,"name":"Hambros","meal":"ランチ","menu":"ベーコンチーズバーガー／シュリンプサラダ＋クアトロコンボ／オニオンリング","price":"$10〜20","area":"Tumon","lat":13.513,"lng":144.8065,"maps":"https://www.google.com/maps/search/?api=1&query=Hambros+Guam","official":"","emoji":"🍔","comment":"🍔 肉厚パティのボリューム系バーガーが中心。ベーコンチーズバーガーは肉＋チーズ＋ベーコンの王道で、オニオンリングを添えるとアメリカン感がさらにアップ。タモン中心から歩いて寄りやすいのも魅力。","image":"","genre":"バーガー","genreEmoji":"🍔","family":false,"local":false,"areaShort":"タモン","image2":"https://www.guam.co.kr/data/restaurant/155589755785334400.jpg"},{"id":11,"name":"FujiIchiban Guam","meal":"ランチ","menu":"醤油・豚骨ラーメン／辛辛スパイシーラーメン／唐揚げ／チャーハン","price":"$10〜20","area":"Tumon","lat":13.512,"lng":144.8068,"maps":"https://www.google.com/maps/search/?api=1&query=FujiIchiban+Guam","official":"https://fujiichiguam.com/","emoji":"🍜","comment":"🍜 味噌・醤油・豚骨系ラーメンにチャーシュー、味玉、ねぎなどを合わせる日本食。グアム料理が続いて日本食が恋しくなった時にも便利。唐揚げやチャーハンを追加して家族でシェアするのもおすすめ。","image":"https://image.jimcdn.com/app/cms/image/transf/none/path/sf9e43b9122b4e5ae/image/i2c64dcccaf962d21/version/1683441518/image.jpg","genre":"日本食","genreEmoji":"🍣","family":true,"local":true,"areaShort":"タモン","image2":"https://image.jimcdn.com/app/cms/image/transf/none/path/sf9e43b9122b4e5ae/image/i2c64dcccaf962d21/version/1683441518/image.jpg"},{"id":12,"name":"Sakura Dining","meal":"ランチ","menu":"梅鉄板セット／寿司／刺身／天ぷら","price":"$10〜20","area":"Tamuning","lat":13.492,"lng":144.8,"maps":"https://www.google.com/maps/search/?api=1&query=Sakura+Dining+Guam","official":"https://sakuraguam.com/","emoji":"🍣","comment":"🍣 寿司・刺身・天ぷらなど、日本食をしっかり食べたい日に向く店。寿司プラッターなら複数種類をまとめて楽しめ、家族で取り分けやすい。グアム料理が続いた日の日本食リセットにも。","image":"https://cdn.myordering.online/biteheist-uploads/restaurant/1763656220140.webp","genre":"日本食","genreEmoji":"🍣","family":true,"local":true,"areaShort":"Tamuning"},{"id":13,"name":"Pieology Pizzeria","meal":"ランチ","menu":"カスタムピザ／カルツォーネ／プルコギ薄皮ピザ","price":"$10〜20","area":"Apotgan","lat":13.492,"lng":144.802,"maps":"https://www.google.com/maps/search/?api=1&query=Pieology+Pizzeria+Guam","official":"https://pieology.com/","emoji":"🍕","comment":"🍕 生地・ソース・具材を自分好みに組み合わせるカスタムピザが魅力。肉・野菜・チーズなど好みが違う家族でも、それぞれ好きなピザを作りやすい。","image":"https://images.happycow.net/venues/1024/15/17/hcmp151717_1931630.jpeg","genre":"ピザ","genreEmoji":"🍕","family":true,"local":false,"areaShort":"Apotgan"},{"id":14,"name":"Ben N' Yan's","meal":"ランチ","menu":"オックステール・カレカレ／クリスピーポーク・シシグ／上海風ルンピア","price":"$10〜20","area":"Upper Tumon","lat":13.52,"lng":144.8105,"maps":"https://www.google.com/maps/search/?api=1&query=Ben+N+Yans+Guam","official":"","emoji":"🍖","comment":"🍖 フィリピン／グアム系の味を楽しみたい人向け。カレカレは肉と野菜を濃厚なピーナッツ系ソースで煮込む料理、シシグは細かい肉を香ばしく炒めたご飯が進む系。ルンピアはパリッとした春巻きでシェアしやすい。","image":"","genre":"フィリピン","genreEmoji":"🍗","family":true,"local":true,"areaShort":"タモン"},{"id":15,"name":"Manang Pika（Tumon）","meal":"ランチ","menu":"ビリアタコス／フィッシュタコス（マンゴーサルサ）／シシグタコス／チュロス","price":"$10〜20","area":"Tumon","lat":13.514,"lng":144.805,"maps":"https://www.google.com/maps/search/?api=1&query=Manang+Pika+Tumon+Guam","official":"https://www.manangpika.com/","emoji":"🌮","comment":"🌮 フィリピン料理とメキシコ料理のフュージョン。ビリアタコスは煮込んだ肉の旨味をタコスで楽しむタイプ、シシグタコスは香ばしい豚肉系の具が主役。タコス＋チュロスでカジュアルランチに。","image":"https://static.wixstatic.com/media/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg/v1/fill/w_1000%2Ch_751%2Cal_c%2Cq_85%2Cusm_0.66_1.00_0.01/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg","genre":"フィリピン","genreEmoji":"🍗","family":false,"local":false,"areaShort":"タモン","image2":"https://static.wixstatic.com/media/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg/v1/fill/w_1000%2Ch_751%2Cal_c%2Cq_85%2Cusm_0.66_1.00_0.01/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg"},{"id":16,"name":"Beachin Shrimp","meal":"ランチ","menu":"ビーチンシュリンプ／カリフォルニア・シュリンプ・ロール／エビフライバーガー","price":"$14〜25","area":"Tumon","lat":13.5145,"lng":144.8052,"maps":"https://www.google.com/maps/search/?api=1&query=Beachin+Shrimp+Guam","official":"https://www.beachinshrimp.com/","emoji":"🍤","comment":"🍤 エビを主役にしたシーフード店。Beachin Shrimpやココナッツシュリンプは、プリッとしたエビに香ばしい衣を合わせるタイプで、エビ好きには分かりやすいチョイス。シーフード好きの家族でシェアがおすすめ。","image":"","genre":"バーガー","genreEmoji":"🍔","family":true,"local":false,"areaShort":"タモン","image2":"https://blog.kakaocdn.net/dna/x6qyF/btqBziRIFKh/AAAAAAAAAAAAAAAAAAAAAG6i9TIGzZiSHpocRIjJLl7nvapxIeH8cpl5J6om4-Jc/img.jpg?allow_ip=&allow_referer=&credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1777561199&signature=AVTm0OkRFtioNCuCQxbfmHjE660%3D"},{"id":17,"name":"Lee Garden","meal":"ランチ","menu":"揚げ焼きそば／麻婆豆腐／天津飯／エビチリ","price":"$8〜15","area":"Tumon","lat":13.5148,"lng":144.8058,"maps":"https://www.google.com/maps/search/?api=1&query=Lee+Garden+Guam","official":"","emoji":"🥢","comment":"🥢 揚げ焼きそばは香ばしく焼いた麺に肉・エビ・野菜を合わせた食べ応えメニュー。麻婆豆腐やエビチリもご飯が進むので、複数品を注文して取り分ける食べ方と相性がいい。","image":"https://deliverlogic-common-assets.s3.amazonaws.com/editable/images/goodtogo/menuitems/25498.png","genre":"シーフード","genreEmoji":"🍤","family":false,"local":false,"areaShort":"タモン"},{"id":18,"name":"Three Squares Restaurant","meal":"ランチ","menu":"レッドライス／ティナラカトネ／フライドチキン／ビーフブリスケット","price":"$10〜20","area":"Tamuning","lat":13.487,"lng":144.803,"maps":"https://www.google.com/maps/search/?api=1&query=Three+Squares+Restaurant+Guam","official":"","emoji":"🍚","comment":"🍚 ローカルなチャモロ料理を試したい人におすすめ。レッドライスはアチョーテで色付けしたグアム定番のご飯。ティナラカトネなどの肉料理と合わせると、グアムらしいプレートランチ感を楽しめる。","image":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_600%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/Three_Sqare3_8fdb753f-e09d-4464-99a1-153c6c64d03a.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"Tamuning","image2":"https://assets.simpleviewinc.com/sv-guam/image/fetch/c_fill%2Ch_630%2Cq_76%2Cw_950/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/gvb_1654845286_3SQ---Local-Sampler_32CCD6BF-5056-A36A-0CFA039A61096402-32ccd5695056a36_32ccdff2-5056-a36a-0cde0b6abf6db4ab.jpg"},{"id":19,"name":"San Jung","meal":"ランチ","menu":"キムチチゲ／キムチチャーハン／味付けカルビ／チーズタッカルビ／ビビンバ","price":"$10〜20","area":"Harmon","lat":13.5225,"lng":144.822,"maps":"https://www.google.com/maps/search/?api=1&query=San+Jung+Guam","official":"","emoji":"🥘","comment":"🥘 韓国料理店。キムチチゲは酸味と辛味のある熱々スープ、ビビンバはご飯＋野菜＋肉などを混ぜて食べる定番。味付けカルビやチーズタッカルビもあり、辛い料理好きなら候補。","image":"https://media.triple.guide/triple-cms/c_limit%2Cf_auto%2Ch_1024%2Cw_1024/8f9ea044-1a60-465f-8dcf-28ae324478bc.jpeg","genre":"韓国","genreEmoji":"🥘","family":false,"local":false,"areaShort":"Harmon","image2":"https://media.triple.guide/triple-cms/c_limit%2Cf_auto%2Ch_1024%2Cw_1024/97b12f2a-0021-400a-83c1-1b85e5b4c6a0.jpeg"},{"id":20,"name":"Caliente Restaurant","meal":"ランチ","menu":"ステーキファヒータ／カリフォルニアブリトー／チキンファヒータ／エンチラーダ","price":"$10〜20","area":"Hagåtña","lat":13.4748,"lng":144.7515,"maps":"https://www.google.com/maps/search/?api=1&query=Caliente+Restaurant+Guam","official":"","emoji":"🌮","comment":"🌮 メキシカン系。ファヒータは焼いた肉と野菜をトルティーヤなどと合わせて食べるスタイルで、香ばしさとスパイス感を楽しめる。ブリトーやエンチラーダもあり、ボリューム重視のランチに。","image":"","genre":"メキシカン","genreEmoji":"🌮","family":false,"local":false,"areaShort":"ハガニア"},{"id":21,"name":"Chili's Grill & Bar","meal":"ディナー","menu":"「3 For Me」セット／ケサディーヤ／マルガリータグリルドチキン／ベビーバックリブ","price":"$10〜30","area":"Tumon","lat":13.513,"lng":144.806,"maps":"https://www.google.com/maps/search/?api=1&query=Chili%27s+Guam","official":"https://www.chilis.com/","emoji":"🍖","comment":"🔥 アメリカン・テックスメックス系。ベビーバックリブは骨付きポークを甘辛いBBQソースで仕上げた肉料理で写真映えも◎。ケサディーヤなどシェアしやすい料理もあり、家族で取り分けるのがおすすめ。","image":"https://assets.simpleviewinc.com/sv-guam/image/fetch/c_limit%2Cq_75%2Cw_830/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/TEXAS-SIZE-RIBS_A644AA3D-5056-A36A-0C6118FFF1F79EC2-a644a9805056a36_a644aaa4-5056-a36a-0cd16a6b84e6dd67.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":true,"local":false,"areaShort":"タモン","image2":"https://assets.simpleviewinc.com/simpleview/image/upload/c_fill%2Ch_520%2Cq_75%2Cw_785/v1/crm/guam/Array---Mix---Burger---Rib---Fajita_A6614755-5056-A36A-0C374F839827BADF-a66146d85056a36_a66147af-5056-a36a-0c501aa16ccbdf0c.jpg"},{"id":22,"name":"Jamaican Grill","meal":"ディナー","menu":"バリュープラッター（リブ＋チキン）／ジャークチキン／ジャークバーガー／BBQリブ","price":"$10〜20","area":"Tamuning","lat":13.503,"lng":144.8005,"maps":"https://www.google.com/maps/search/?api=1&query=Jamaican+Grill+Guam","official":"https://jamaicangrill.com/","emoji":"🔥","comment":"🔥 ジャークチキンやリブなど、スパイスとBBQ感のある肉料理が主役。バリュープラッターならリブ＋チキンをまとめて食べられ、豪快な肉プレートを楽しみたい日にぴったり。","image":"https://www.airial.travel/_next/image?q=70&url=https%3A%2F%2Fmedia-cdn.tripadvisor.com%2Fmedia%2Fphoto-w%2F24%2Fe4%2F8b%2F99%2Fthe-triple-combo-ribs.jpg&w=3840","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":false,"areaShort":"Tamuning"},{"id":23,"name":"Mosa's Joint","meal":"ディナー","menu":"Spinach, Mushroom & Bleu Cheese Burger／ルーベンサンド／アボカドポキ","price":"$10〜20","area":"Hagåtña","lat":13.4748,"lng":144.75,"maps":"https://www.google.com/maps/search/?api=1&query=Mosa%27s+Joint+Guam","official":"","emoji":"🍔","comment":"🍔 カジュアルなバーガー店。Spinach, Mushroom & Bleu Cheese Burgerはほうれん草・きのこ・ブルーチーズの風味が加わる大人向けバーガー。チェーン系とは違うバーガーを食べたい日におすすめ。","image":"https://cdn-ak.f.st-hatena.com/images/fotolife/k/kokawauso/20190930/20190930220647.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":false,"areaShort":"ハガニア","image2":"https://cdn-ak.f.st-hatena.com/images/fotolife/k/kokawauso/20190930/20190930220647.jpg"},{"id":24,"name":"PROA Restaurant","meal":"ディナー","menu":"チャモロスタイルBBQ（ショートリブ・スペアリブ＋ライス＋サラダ）","price":"BBQ $21〜25／メイン $23〜33","area":"Tumon","lat":13.512,"lng":144.805,"maps":"https://www.google.com/maps/search/?api=1&query=PROA+Restaurant+Guam","official":"https://www.proaguam.com/","emoji":"🔥","comment":"🔥 グアムでチャモロBBQを狙うなら有力候補。ショートリブやスペアリブなどを香ばしく焼き、レッドライスやサラダと合わせる豪快なプレート。ディナーの本命候補に。","image":"https://livedoor.blogimg.jp/drkgw2012-gourmet_travelogue/imgs/f/6/f6b09cfa-s.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"タモン","image2":"https://tblg.k-img.com/restaurant/images/Rvw/248604/640x640_rect_9ff9d6399ecd1992f55eb883bea16652.jpg"},{"id":25,"name":"California Pizza Kitchen","meal":"ディナー","menu":"ハワイアンBBQチキンピザ／クリスピーピザ／パスタ","price":"$15〜25","area":"Tumon","lat":13.5142,"lng":144.8052,"maps":"https://www.google.com/maps/search/?api=1&query=California+Pizza+Kitchen+Guam","official":"https://www.cpk.com/","emoji":"🍕","comment":"🍕 ハワイアンBBQチキンピザはBBQソースの甘辛さにチキン、チーズ、パイナップルなどを合わせた人気系ピザ。甘じょっぱい味が好きならおすすめ。家族でシェアしやすい。","image":"https://scotscoop.com/wp-content/uploads/2013/12/IMG_0103.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":true,"local":false,"areaShort":"タモン","image2":"https://www.tripcoupon.com/upload_files/MULS520230831052538.jpg"},{"id":26,"name":"Ban Thai","meal":"ディナー","menu":"トムヤムクン／グリーンカレー／マッサマンカレー／Ban Thai Sampler","price":"$12〜22","area":"Tamuning","lat":13.5045,"lng":144.801,"maps":"https://www.google.com/maps/search/?api=1&query=Ban+Thai+Guam","official":"https://www.banthaiguam.com/","emoji":"🍲","comment":"🍲 トムヤムクンはエビの旨味に酸味・辛味・ハーブの香りを重ねたタイ料理の代表格。グリーンカレーやマッサマンカレーはココナッツのまろやかさがあり、辛さが苦手な人にも比較的選びやすい。","image":"https://assets.simpleviewinc.com/simpleview/image/fetch/c_limit%2Cq_75%2Cw_830/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/f6_683570ED-5056-A36A-0CCA36DA8D895F93-68356f2c5056a36_6835790e-5056-a36a-0c9120f8ba5dff9c.jpg","genre":"シーフード","genreEmoji":"🍤","family":false,"local":false,"areaShort":"Tamuning","image2":"https://assets.simpleviewinc.com/simpleview/image/upload/crm/guam/f3_682DB163-5056-A36A-0CCC5EDB18F31981-682dafb95056a36_682db9ee-5056-a36a-0c9cb7a3743cd23b.jpg"},{"id":27,"name":"TGI Friday's","meal":"ディナー","menu":"フライデー ウイスキー グレイズ リブ／ハンバーガー／ステーキ／サンドウィッチ","price":"$15〜28","area":"Tamuning","lat":13.506,"lng":144.802,"maps":"https://www.google.com/maps/search/?api=1&query=TGI+Fridays+Guam","official":"https://www.tgifridays.com/","emoji":"🍖","comment":"🍖 アメリカンな肉料理をがっつり食べたい日に。Whiskey Glaze系のリブは甘辛いグレーズを絡めた骨付き肉で、フライドポテトなどと合わせるとかなりボリューム満点。","image":"https://d34coi8mdyihzd.cloudfront.net/images/WHAT%27S-ON-19/Fridays-Signature-Glaze-62/MOBILE-90/fsg-header-540","genre":"バーガー","genreEmoji":"🍔","family":false,"local":false,"areaShort":"Tamuning","image2":"https://assets.simpleviewinc.com/sv-guam/image/fetch/c_limit%2Cq_75%2Cw_830/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/vd5_32B4926F-5056-A36A-0C98FFB31CBB7BE0-32b490705056a36_32b4a4b2-5056-a36a-0c68b47410b1fa99.jpg"},{"id":28,"name":"メスクラ チャモロ フュージョン ビストロ","meal":"ディナー","menu":"ケラグエン／ティナクタック／創作ハンバーガー・パスタ／日曜限定ブランチ","price":"$15〜30","area":"Hagåtña","lat":13.476,"lng":144.75,"maps":"https://www.google.com/maps/search/?api=1&query=Meskla+Chamorro+Fusion+Bistro+Guam","official":"https://mesklaguam.com/","emoji":"🇬🇺","comment":"🇬🇺 現代的なチャモロ料理を食べたいなら注目。ケラグエンは肉や魚介を柑橘・唐辛子などで和えるチャモロ料理、ティナクタックは肉と野菜をココナッツ系の味で煮込む郷土料理。グアムらしさ優先ならかなりおすすめ。","image":"","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"ハガニア"}];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let current=DATA;
 
-const mapEl=document.getElementById('tileMap');
-const worldEl=document.getElementById('mapWorld');
-const tileLayer=document.getElementById('tileLayer');
-const pinEl=document.getElementById('pinLayer');
-let zoom=12;
-let center={lat:13.505,lng:144.800};
-let dragging=false,last={x:0,y:0};
-let pointers=new Map();
-let pinchStartDist=0,pinchLastScale=1,pinchBaseZoom=12,pinchBaseCenter={...center},pinchMid={x:0,y:0},pinchBaseTransform={ox:0,oy:0};
-let tileKey='', tileSetId=0;
-
-function clampLat(lat){return Math.max(-85.05112878,Math.min(85.05112878,lat));}
-function worldSize(z){return 256*Math.pow(2,z);}
-function project(lat,lng,z=zoom){
-  const n=worldSize(z),la=clampLat(lat)*Math.PI/180;
-  return {x:(lng+180)/360*n,y:(1-Math.asinh(Math.tan(la))/Math.PI)/2*n};
+const mapEl=document.getElementById('map');
+let map;
+let markerLayer;
+const markers=new Map();
+function initMap(){
+  map=L.map('map',{center:[13.505,144.800],zoom:11,minZoom:9,maxZoom:18,zoomControl:true,preferCanvas:false,zoomAnimation:true,fadeAnimation:true,markerZoomAnimation:true,scrollWheelZoom:true,doubleClickZoom:true,dragging:true,touchZoom:true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors',detectRetina:true,keepBuffer:4,updateWhenZooming:false,updateWhenIdle:true}).addTo(map);
+  markerLayer=L.layerGroup().addTo(map);
+  map.on('zoomend moveend',()=>{ if(window._mapFilterPending) return; });
 }
-function unproject(x,y,z=zoom){
-  const n=worldSize(z),lng=x/n*360-180,yy=Math.PI*(1-2*y/n);
-  return {lng,lat:180/Math.PI*Math.atan(Math.sinh(yy))};
+function makePin(i){
+  const icon=L.divIcon({className:'',html:'<div class="storePin"><span>'+((i+1))+'</span></div>',iconSize:[28,34],iconAnchor:[14,34],popupAnchor:[0,-34]});
+  return icon;
 }
-function tileUrl(x,y,z){
-  const n=2**z;x=((x%n)+n)%n;
-  return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
-}
-function viewportTransform(){
-  const c=project(center.lat,center.lng,zoom);
-  return {ox:mapEl.clientWidth/2-c.x,oy:mapEl.clientHeight/2-c.y};
-}
-function setWorldTransform(ox,oy,scale=1){
-  worldEl.style.transformOrigin='0 0';
-  worldEl.style.transform=`translate3d(${ox}px,${oy}px,0) scale(${scale})`;
-}
-function setPinchTransform(scale){
-  const m=pinchMid,b=pinchBaseTransform;
-  worldEl.style.transformOrigin='0 0';
-  worldEl.style.transform=`translate3d(${m.x}px,${m.y}px,0) scale(${scale}) translate3d(${b.ox-m.x}px,${b.oy-m.y}px,0)`;
-}
-function rebuildTiles(force=false){
-  const c=project(center.lat,center.lng,zoom);
-  const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256);
-  const key=`${zoom}:${tx}:${ty}`;
-  if(!force && key===tileKey)return;
-  const set=document.createElement('div');
-  set.className='tileSet';
-  set.dataset.key=key;
-  const id=++tileSetId;
-  let loaded=0,swapped=false;
-  const swap=()=>{
-    if(swapped)return;swapped=true;
-    set.style.opacity='1';
-    [...tileLayer.children].forEach(ch=>ch.style.opacity='0');
-    tileLayer.appendChild(set);
-    setTimeout(()=>{[...tileLayer.children].forEach(ch=>{if(ch!==set)ch.remove()})},120);
-    tileKey=key;
-  };
-  for(let yy=ty-3;yy<=ty+3;yy++)for(let xx=tx-3;xx<=tx+3;xx++){
-    const img=new Image();img.className='tile';img.draggable=false;img.alt='';
-    img.style.left=(xx*256)+'px';img.style.top=(yy*256)+'px';
-    img.src=tileUrl(xx,yy,zoom);
-    img.onload=()=>{loaded++;if(loaded===1)swap()};
-    img.onerror=()=>{loaded++;if(loaded===1)swap()};
-    set.appendChild(img);
-  }
-  set.style.opacity='0';
-  // Keep previous set visible until the first new tile arrives.
-  tileLayer.appendChild(set);
-  setTimeout(()=>{if(!swapped)swap()},1800);
-}
-function renderPins(){
-  pinEl.innerHTML='';
+function renderMap(){
+  if(!map) initMap();
+  markerLayer.clearLayers(); markers.clear();
   current.forEach(d=>{
     if(d.lat==null||d.lng==null)return;
-    const p=project(Number(d.lat),Number(d.lng),zoom),i=DATA.indexOf(d);
-    const b=document.createElement('button');b.className='mapPin';b.type='button';b.title=d.name;
-    b.style.left=p.x+'px';b.style.top=p.y+'px';
-    b.innerHTML='<span>'+((i+1))+'</span>';
-    b.onclick=e=>{e.stopPropagation();focusStore(i)};
-    pinEl.appendChild(b);
+    const i=DATA.indexOf(d);
+    const m=L.marker([Number(d.lat),Number(d.lng)],{icon:makePin(i),keyboard:false,autoPan:true});
+    m.bindTooltip(esc(d.name),{direction:'top',offset:[0,-30],opacity:.95});
+    m.on('click',()=>focusStore(i));
+    m.addTo(markerLayer); markers.set(i,m);
   });
+  setTimeout(()=>map.invalidateSize({pan:false,animate:false}),30);
 }
-function renderMap(forceTiles=false){
-  const t=viewportTransform();
-  setWorldTransform(t.ox,t.oy,1);
-  rebuildTiles(forceTiles);renderPins();
-}
-function zoomAt(newZoom,px,py){
-  const nz=Math.max(9,Math.min(17,Math.round(newZoom)));
-  if(nz===zoom)return;
-  const old=viewportTransform();
-  const wx=(px-old.ox),wy=(py-old.oy);
-  const anchor=unproject(wx,wy,zoom);
-  zoom=nz;
-  const np=project(anchor.lat,anchor.lng,zoom);
-  center=unproject(np.x-(px-mapEl.clientWidth/2),np.y-(py-mapEl.clientHeight/2),zoom);
-  renderMap(true);
-}
-function pinchMove(scale){
-  const s=Math.max(.65,Math.min(2.6,scale));
-  pinchLastScale=s;
-  // Scale the SAME world that contains both tiles and pins, around the exact pinch midpoint.
-  setPinchTransform(s);
-}
-function beginPinch(){
-  const pts=[...pointers.values()];
-  pinchStartDist=Math.max(1,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
-  pinchLastScale=1;
-  pinchBaseZoom=zoom;pinchBaseCenter={...center};pinchBaseTransform=viewportTransform();
-  const r=mapEl.getBoundingClientRect();pinchMid={x:(pts[0].x+pts[1].x)/2-r.left,y:(pts[0].y+pts[1].y)/2-r.top};
-}
-mapEl.addEventListener('wheel',e=>{e.preventDefault();zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY)},{passive:false});
-mapEl.addEventListener('pointerdown',e=>{
-  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  try{mapEl.setPointerCapture(e.pointerId)}catch(_){ }
-  if(pointers.size===1){dragging=true;last={x:e.clientX,y:e.clientY};mapEl.classList.add('dragging');}
-  else if(pointers.size===2){dragging=false;beginPinch();}
-});
-mapEl.addEventListener('pointermove',e=>{
-  if(!pointers.has(e.pointerId))return;
-  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size>=2){
-    const pts=[...pointers.values()],d=Math.max(1,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
-    pinchMove(d/pinchStartDist);return;
-  }
-  if(!dragging)return;
-  const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};
-  const c=project(center.lat,center.lng,zoom),n=unproject(c.x-dx,c.y-dy,zoom);
-  center={lat:n.lat,lng:n.lng};
-  const t=viewportTransform();setWorldTransform(t.ox,t.oy,1);
-  renderPins();
-  // Refresh tiles only after crossing into a new tile area; never rebuild during the gesture itself.
-  rebuildTiles(false);
-});
-function finishPinch(){
-  if(!pinchStartDist)return;
-  const s=pinchLastScale;
-  const m=pinchMid,b=pinchBaseTransform;
-  // The geographic point under the pinch midpoint in the base view is fixed.
-  const anchor=unproject(m.x-b.ox,m.y-b.oy,pinchBaseZoom);
-  const rawZoom=pinchBaseZoom+Math.log2(s);
-  const nz=Math.max(9,Math.min(17,Math.round(rawZoom)));
-  zoom=nz;
-  const np=project(anchor.lat,anchor.lng,zoom);
-  center=unproject(np.x-(m.x-mapEl.clientWidth/2),np.y-(m.y-mapEl.clientHeight/2),zoom);
-  pinchStartDist=0;pinchLastScale=1;tileKey='';
-  renderMap(true);
-}
-function endPointer(e){
-  pointers.delete(e.pointerId);
-  if(pointers.size===1 && pinchStartDist){
-    // Normalize the map before continuing with a one-finger drag.
-    finishPinch();
-    const p=[...pointers.values()][0];dragging=true;last={x:p.x,y:p.y};
-  }else if(pointers.size===0){
-    if(pinchStartDist)finishPinch();
-    dragging=false;mapEl.classList.remove('dragging');
-  }else if(pointers.size===1){
-    const p=[...pointers.values()][0];dragging=true;last={x:p.x,y:p.y};
-  }
-  try{mapEl.releasePointerCapture(e.pointerId)}catch(_){ }
-}
-mapEl.addEventListener('pointerup',endPointer);mapEl.addEventListener('pointercancel',endPointer);
-mapEl.addEventListener('dblclick',e=>{e.preventDefault();zoomAt(zoom+1,e.offsetX,e.offsetY)});
-document.getElementById('mapPlus').onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById('mapMinus').onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById('mapReset').onclick=()=>{zoom=12;center={lat:13.505,lng:144.800};tileKey='';renderMap(true)};
-window.addEventListener('resize',()=>renderMap(true));
-
+function resetMap(){ if(!map)return; map.setView([13.505,144.800],11,{animate:false}); }
 function focusStore(i){
   const d=DATA[i];
-  if(d.lat&&d.lng){zoom=15;center={lat:Number(d.lat),lng:Number(d.lng)};tileKey='';renderMap(true)}
+  if(d.lat!=null&&d.lng!=null){
+    if(!map)initMap();
+    map.setView([Number(d.lat),Number(d.lng)],15,{animate:true});
+  }
   showDetail(i);
 }
+
+document.getElementById('mapReset').onclick=resetMap;
+window.addEventListener('resize',()=>{if(map)map.invalidateSize({pan:false,animate:false})});
+
 function showDetail(i){
   const d=DATA[i],photos=[d.image,d.image2,d.image3].filter(Boolean);
   const favs=JSON.parse(localStorage.getItem('guamFavs')||'[]'),isFav=favs.includes(i);
@@ -264,9 +124,9 @@ function applyFilters(){
   const meal=document.querySelector('[data-meal].active')?.dataset.meal||'all',q=document.querySelector('.qf.active')?.dataset.q||'all',favs=JSON.parse(localStorage.getItem('guamFavs')||'[]');
   current=DATA.filter((d,i)=>(meal==='all'||d.meal===meal)&&(q==='all'||(q==='family'&&d.family)||(q==='local'&&d.local)||(q==='photo'&&d.image)||(q==='fav'&&favs.includes(i))));
   const labels={all:'すべての店舗',朝食:'朝食のお店',ランチ:'ランチのお店',ディナー:'ディナーのお店'};
-  document.getElementById('activeNote').textContent='📍 '+labels[meal]+'（'+current.length+'店舗）';renderList();renderMap(true);
+  document.getElementById('activeNote').textContent='📍 '+labels[meal]+'（'+current.length+'店舗）';renderList();renderMap();
 }
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.tab).classList.add('active');if(b.dataset.tab==='food')setTimeout(()=>renderMap(true),30)});
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.tab).classList.add('active');if(b.dataset.tab==='food')setTimeout(()=>{renderMap();if(map)map.invalidateSize({pan:false,animate:false})},80)});
 document.querySelectorAll('[data-meal]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-meal]').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters()});
 document.querySelectorAll('.qf').forEach(b=>b.onclick=()=>{document.querySelectorAll('.qf').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters()});
 applyFilters();

@@ -1,11 +1,7 @@
-GUAM FAMILY TRAVEL MAP — MAP操作最終修正版
+GUAM FAMILY TRAVEL MAP — pinch drift fix
 
-今回の修正:
-- 地図タイルと店舗ピンを同一の mapWorld レイヤーで同期
-- ピンチズーム中はタイル再生成を行わず、同じレイヤーを滑らかに拡大
-- ピンチ終了時の中心座標計算を修正
-- ピンチ→片手ドラッグへ移行した際の位置ジャンプを修正
-- 旧版に残っていた scale() の正規表現によるズーム値取得を廃止
-- 新しいタイルが読み込まれるまで旧タイルを残す
-- タッチ操作中のブラウザ側スクロールを防止
-- JS構文チェック済み
+- Pinch midpoint movement is separated from the original geographic anchor.
+- The same map world contains both tiles and store pins.
+- On pinch end, the visual scale is snapped to the committed integer zoom before recomputing center, preventing directional drift.
+- New tile sets are layered over the old set so the map is not intentionally blanked during loading.
+- Touch-action is disabled on the map so iPhone gestures remain inside the map.
