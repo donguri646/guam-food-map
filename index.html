@@ -153,11 +153,9 @@ function xy(lat,lon){
 function esc2(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function esc(s){return esc2(s)}
 function renderGuamMap(){
-  const shell=document.getElementById('map');
+  const shell=mapShell;
   shell.innerHTML='';
-  const mapShellEl=document.createElement('div');
-  mapShellEl.className='guamMapShell';
-  shell.appendChild(mapShellEl);
+  const mapShellEl=shell;
   const pinItems=DATA.map((d,i)=>{const [x,y]=xy(d.lat,d.lng);return {d,i,x:x/10,y:y/15}});
   // Group very close pins so the overview stays readable.
   const groups=[];
@@ -279,4 +277,4 @@ render();
 search.addEventListener('input',render);
 render(); show(0,false);
 </script>
-<div class="note">📸 写真はWeb上で確認できた料理・店舗掲載写真を表示しています。画像が読み込めない場合は料理アイコンに切り替わります。公開用途では各画像の利用条件をご確認ください。</div></body></html>
+<div class="note">📸 写真はWeb上で確認できた料理・店舗掲載写真を表示しています。画像が読み込めない場合は料理アイコンに切り替わります。公開用途では各画像の利用条件をご確認ください。</div><noscript><div style="margin:16px;padding:16px;border-radius:14px;background:#fff4dc;color:#604d2c;font-weight:800">JavaScriptを有効にするとMAPと店舗情報が表示されます。</div></noscript></body></html>
