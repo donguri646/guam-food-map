@@ -1,0 +1,9 @@
+{
+  "name": "Guam Family Food MAP",
+  "short_name": "Guam Food MAP",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff9ed",
+  "theme_color": "#078d86",
+  "lang": "ja"
+}
