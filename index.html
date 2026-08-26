@@ -1,46 +1,377 @@
 <!doctype html>
-<html lang="ja"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#078d86"><link rel="manifest" href="./manifest.webmanifest">
-<title>Guam Family Travel MAP</title>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#078d86">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<title>🌴 GUAM FAMILY TRAVEL MAP</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#fffaf0;color:#243d3b;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
-header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f);color:#fff;position:sticky;top:0;z-index:1000}h1{font-size:18px;margin:0 0 3px}header p{margin:0;font-size:10px;opacity:.9}
-.tabs{display:flex;gap:6px;padding:8px;background:#fff;position:sticky;top:68px;z-index:999;overflow:auto}.tabs button,.filters button,.qf{border:1px solid #d7e3df;background:#fff;border-radius:999px;padding:8px 11px;font-weight:900;font-size:10px;color:#41615f;white-space:nowrap}.tabs button.active,.filters button.active,.qf.active{background:#e8f6f3;border-color:#75c6bb;color:#08766f}
-.section{display:none}.section.active{display:block}.mapWrap{position:relative;height:62vh;min-height:470px;background:#dceff2}#map{height:100%;width:100%}.mapStatus{position:absolute;top:10px;left:10px;right:10px;z-index:500;display:flex;justify-content:space-between;pointer-events:none}.mapStatus span{background:#fffffff0;border-radius:999px;padding:7px 10px;font-size:9px;font-weight:900;box-shadow:0 2px 8px #0002}
-.filters,.quickFilters{display:flex;gap:6px;overflow:auto;background:#fff}.filters{padding:8px 12px 6px}.quickFilters{padding:0 12px 7px}.activeNote{padding:6px 12px;background:#eef8f6;text-align:center;color:#26716d;font-size:10px;font-weight:900}
-.listHead{display:flex;justify-content:space-between;padding:12px 16px 4px;font-size:13px}.item{display:block;width:calc(100% - 20px);margin:7px 10px;padding:10px;border:1px solid #e0e7e4;border-radius:15px;background:#fff;text-align:left;box-shadow:0 2px 8px #0001}.itemTop{display:flex;gap:9px;align-items:center}.thumb{width:62px;height:54px;object-fit:cover;border-radius:10px;background:#f1eadf;flex:none}.item b{font-size:12px}.item small{display:block;color:#788987;font-size:9px;margin-top:3px}.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.tag{font-size:8px;background:#edf7f5;color:#326c68;border-radius:999px;padding:3px 6px;font-weight:900}
-.card{margin:10px;border-radius:18px;background:#fff;overflow:hidden;box-shadow:0 4px 18px #0001;scroll-margin-top:10px}.gallery{display:flex;overflow-x:auto;gap:7px;scroll-snap-type:x mandatory;background:#f3eee5}.slide{flex:0 0 92%;scroll-snap-align:center;position:relative}.slide img{width:100%;height:245px;object-fit:cover;display:block}.cap{position:absolute;right:8px;bottom:8px;background:#0009;color:#fff;border-radius:999px;padding:4px 7px;font-size:9px}.body{padding:13px 15px 17px}.body h2{margin:7px 0;font-size:20px}.body h3{font-size:12px;margin:13px 0 4px;color:#286c68}.body p{font-size:11px;line-height:1.6;color:#566764}.price{font-weight:900;font-size:11px;color:#795d36}.actions{display:flex;gap:7px;margin-top:13px}.actions a{flex:1;text-align:center;text-decoration:none;border-radius:10px;padding:10px;font-size:10px;font-weight:900}.site{background:#e8f6f3;color:#08766f}.maps{background:#fff1df;color:#8b5e25}.fav{float:right;border:0;border-radius:999px;background:#fff3e3;padding:7px 9px;font-size:10px;font-weight:900;color:#8b612c}
-.playCard,.marketCard,.planCard{margin:10px;padding:14px;border-radius:17px;background:#fff;box-shadow:0 3px 14px #0001}.playCard h2,.marketCard h2,.planCard h2{margin:0 0 5px;font-size:16px}.playCard p,.marketCard p,.planCard p{font-size:11px;line-height:1.6;color:#566764}.badge{display:inline-block;background:#eaf7f4;color:#26716d;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900}
-.leaflet-control-attribution{font-size:8px!important}.leaflet-popup-content{margin:10px;font-size:11px;min-width:180px}.popupTitle{font-weight:900;font-size:13px;margin-bottom:5px}.popupBtn{display:block;margin-top:7px;background:#078d86;color:#fff;text-decoration:none;text-align:center;border-radius:8px;padding:7px;font-weight:900}
-.pin{width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#078d86;border:3px solid #fff;box-shadow:0 2px 7px #0005;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:9px}.pin span{transform:rotate(45deg)}
-</style></head><body>
-<header><h1>🌴 GUAM FAMILY TRAVEL MAP</h1><p>食べる・遊ぶ・朝市・ナイトマーケットをiPhoneでチェック</p></header>
-<nav class="tabs"><button class="active" data-tab="food">🍴 グルメ</button><button data-tab="play">🏝️ 遊ぶ</button><button data-tab="market">🧺 朝市・夜市</button><button data-tab="plan">📅 候補プラン</button></nav>
-<section id="food" class="section active">
-<div class="filters"><button class="active" data-meal="all">すべて</button><button data-meal="朝食">🌅 朝食</button><button data-meal="ランチ">☀️ ランチ</button><button data-meal="ディナー">🌙 ディナー</button></div>
-<div class="quickFilters"><button class="qf active" data-q="all">🍴 全ジャンル</button><button class="qf" data-q="family">👨‍👩‍👧‍👦 子連れ</button><button class="qf" data-q="local">🇬🇺 グアム料理</button><button class="qf" data-q="photo">📸 写真あり</button><button class="qf" data-q="fav">❤️ 保存済み</button></div>
-<div id="activeNote" class="activeNote">📍 すべての店舗</div><div class="mapWrap"><div id="map"></div><div class="mapStatus"><span>🗺️ 詳細MAP</span><span>📍 ピン＝1店舗</span></div></div>
-<div class="listHead"><b>🍴 お店一覧</b><span id="count"></span></div><div id="list"></div><div id="detail"></div>
-</section>
-<section id="play"><div class="playCard"><span class="badge">🏊 プール</span><h2>リゾナーレグアム ウォーターパーク</h2><p>6歳・8歳ならかなり遊びやすい候補。流れるプール、キッズ向けエリア、ウォータースライダーなどをチェック。</p></div><div class="playCard"><span class="badge">🏖️ ビーチ</span><h2>リティディアン・ビーチ</h2><p>北部の自然を楽しむ候補。天候・海況・道路状況を見て日程を決めるのがおすすめ。</p></div><div class="playCard"><span class="badge">🤿 シュノーケリング</span><h2>Ypao Beach Park</h2><p>子どもと海遊びをする候補。当日の海況を確認して無理せず楽しむ。</p></div><div class="playCard"><span class="badge">🐠 シュノーケリング</span><h2>Gun Beach</h2><p>タモン周辺から行きやすい候補。海況を見ながら家族で楽しむ。</p></div></section>
-<section id="market"><div class="marketCard"><span class="badge">🌙 水曜夜</span><h2>Chamorro Village Wednesday Night Market</h2><p>水曜夜にローカルフード、BBQ、ドリンク、屋台、文化パフォーマンスなどを楽しむ候補。</p></div><div class="marketCard"><span class="badge">🌅 土曜朝</span><h2>Dededo Flea Market / デデド朝市</h2><p>土曜朝の候補。ローカルフード、農産物、雑貨などを見て回れる。</p></div></section>
-<section id="plan"><div class="planCard"><h2>⭐ 固定候補</h2><p>水曜夜：チャモロビレッジ・ナイトマーケット<br>土曜朝：デデド朝市<br>リゾナーレ：プールDAY<br>リティディアン：海況が良い日に</p></div><div class="planCard"><h2>🤿 海況が良い日に</h2><p>Ypao / Gun Beachなどを候補にして、当日の天気・波・風・子どもたちの体力で選ぶ。</p></div></section>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#dff8f4,#fff9ed);color:#24383b;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+header{padding:calc(14px + env(safe-area-inset-top)) 16px 12px;background:linear-gradient(135deg,#087f7a,#17a79e);color:#fff;position:sticky;top:0;z-index:1000;box-shadow:0 3px 15px #075d6140}
+h1{font-size:20px;margin:0;font-weight:900}.sub{font-size:11px;margin-top:4px;opacity:.92}
+.toolbar{padding:9px 10px;background:#fff;position:sticky;top:68px;z-index:999;box-shadow:0 2px 10px #0000000c}
+.search{width:100%;padding:11px 13px;border:1px solid #d9e5e1;border-radius:13px;font-size:14px;outline:none}
+.filters{display:flex;gap:7px;overflow:auto;padding-top:8px}.filters button{white-space:nowrap;border:1px solid #d9e5e1;background:#fff;border-radius:999px;padding:8px 11px;font-weight:800;color:#244044}.filters button.active{background:#f2a04b;color:#fff;border-color:#f2a04b}
+
+.guamMapShell{height:455px;background:#bfe7ef;border-bottom:1px solid #d6e5df;overflow:hidden;position:relative}
+.mapToolbar{position:absolute;z-index:20;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.mapToolbar span{background:#ffffffed;border-radius:999px;padding:8px 13px;font-size:11px;font-weight:900;color:#0b6669;box-shadow:0 3px 12px #0002}
+.mapToolbar button{pointer-events:auto;width:48px;height:48px;border:0;border-radius:15px;background:#fff;box-shadow:0 4px 14px #0002;font-size:28px;font-weight:900;color:#126b70}
+.mapViewport{height:100%;width:100%;overflow:hidden;position:relative;touch-action:none}
+.mapStage{position:absolute;inset:0;transform-origin:50% 50%;transition:transform .12s ease;will-change:transform}
+#guamSvg{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.island{fill:#c9c08e;stroke:#6d7758;stroke-width:10}
+.road{fill:none;stroke:#e7d9a7;stroke-width:15;stroke-linecap:round}
+.road.secondary{stroke-width:9}
+.placeLabels{font-weight:900;fill:#3e5149;font-size:25px;letter-spacing:1px}
+.areaHint rect{fill:#ffffff2b;stroke:#fff8;stroke-width:4}
+.areaHint text{fill:#47645d;font-size:25px;font-weight:900}
+.pinLayer{position:absolute;inset:0;z-index:10;pointer-events:none}
+.gpinBtn{position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border:3px solid #fff;border-radius:50%;background:#1688d8;color:#fff;font-size:14px;font-weight:900;box-shadow:0 4px 10px #0005;pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:0}
+.gpinBtn{z-index:30;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.gpinBtn.selected{background:#f39a3f;transform:translate(-50%,-50%) scale(1.18)}
+.clusterBtn{position:absolute;transform:translate(-50%,-50%);min-width:46px;height:46px;border:4px solid #fff;border-radius:50%;background:#f08f3c;color:#fff;font-size:17px;font-weight:900;box-shadow:0 5px 12px #0005;pointer-events:auto;display:flex;align-items:center;justify-content:center;gap:1px;padding:0 7px;z-index:2}.clusterBtn small{font-size:9px}.clusterBtn.selected{background:#078d86;transform:translate(-50%,-50%) scale(1.12)}
+
+.pinHint{position:absolute;z-index:11;left:50%;bottom:58px;transform:translateX(-50%);background:#ffffffed;border-radius:999px;padding:7px 12px;font-size:10px;font-weight:900;color:#48605f;box-shadow:0 3px 10px #0002;white-space:nowrap}
+.mapMode{position:absolute;z-index:13;left:10px;top:68px;display:flex;gap:6px}.mapMode button{border:0;background:#ffffffef;color:#246366;border-radius:999px;padding:8px 11px;font-size:10px;font-weight:900;box-shadow:0 3px 10px #0002}.mapMode button.active{background:#078d86;color:#fff}.mapLegend{position:absolute;z-index:12;bottom:8px;left:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.mapLegend span{background:#fffffff0;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:800;color:#47605f}
+#map{height:455px;width:100%}
+
+.pinlabel{font-weight:900;font-size:12px;line-height:1.1;text-align:center}
+.howto{margin:9px 12px 0;padding:10px 12px;border-radius:14px;background:#e9f7f5;color:#286467;font-size:10px;line-height:1.5}.howto b{display:block;font-size:11px;margin-bottom:3px}.selectedBar{padding:8px 12px;background:#fff1dc;color:#805a2a;font-size:11px;font-weight:900}.card{margin:12px;background:#fff;border:1px solid #eadfca;border-radius:20px;overflow:hidden;box-shadow:0 8px 28px #194d4a18}
+.photoWrap{height:210px;background:#f4eee4;position:relative;overflow:hidden}.foodphoto{width:100%;height:100%;object-fit:cover;display:block}.photoCaption{position:absolute;right:8px;bottom:8px;background:#0009;color:#fff;padding:4px 7px;border-radius:8px;font-size:9px}.photoError{display:flex;align-items:center;justify-content:center}.photoError:after{content:'🍴';font-size:70px}.hero{height:145px;background:linear-gradient(135deg,#ffe5a8,#f6a36c 55%,#e56f63);display:flex;align-items:center;justify-content:center;font-size:70px;position:relative}
+.body{padding:15px}.pill{display:inline-block;background:#e3f6f3;color:#075d61;border-radius:99px;padding:5px 9px;font-size:10px;font-weight:900}
+.name{font-size:20px;font-weight:900;margin:7px 0}.menu{font-size:13px;line-height:1.55}.price{font-weight:900;color:#d98224;margin-top:8px}.area{font-size:12px;color:#758181;margin-top:4px}
+.comment{font-size:12px;line-height:1.55;color:#687474;margin-top:8px}.actions{display:flex;gap:8px;margin-top:12px}
+.actions a{flex:1;text-align:center;text-decoration:none;padding:11px 5px;border-radius:12px;font-size:12px;font-weight:900}.site{background:#078d86;color:#fff}.maps{background:#fff1dc;color:#86591f;border:1px solid #f0d2a6}
+.list{padding:4px 12px 28px}.item{display:block;width:100%;text-align:left;padding:12px 3px;border:0;border-bottom:1px solid #eee;background:transparent;color:#24383b}.item b{font-size:13px}.item span{display:block;color:#7a8484;font-size:11px;margin-top:2px}
+.note{margin:12px 12px 28px;padding:12px;border-radius:14px;background:#fff4df;color:#725d3d;font-size:10px;line-height:1.55}
+
+.quickFilters{display:flex;gap:7px;overflow-x:auto;padding:0 18px 10px;background:#fff;-webkit-overflow-scrolling:touch}.qf{flex:0 0 auto;border:1px solid #d9e2df;background:#fff;border-radius:999px;padding:8px 11px;font-size:11px;font-weight:900;color:#41615f}.qf.active{background:#e8f6f3;border-color:#7ac6bc;color:#08766f}
+.listHead{display:flex;justify-content:space-between;align-items:center;padding:15px 18px 8px;font-size:14px}.listHead span{font-size:11px;color:#7a8b89}
+.item{display:block;width:calc(100% - 24px);margin:8px 12px;padding:11px;border:1px solid #e2e7e4;border-radius:16px;background:#fff;text-align:left;box-shadow:0 2px 8px #0000000a}.itemTop{display:flex;gap:10px;align-items:center}.itemTop img,.thumbEmoji{width:62px;height:52px;border-radius:11px;object-fit:cover;background:#f4eee4;display:flex;align-items:center;justify-content:center;font-size:27px;flex:none}.itemTop b{display:block;font-size:13px;color:#263c3b;margin-bottom:4px}.itemTop span{display:block;font-size:10px;color:#788987}.itemTags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.itemTags em{font-style:normal;background:#f0f7f5;color:#4a6a67;border-radius:999px;padding:3px 6px;font-size:8px;font-weight:800}.itemMenu{font-size:10px;color:#596967;margin-top:7px;line-height:1.4}
+.tripTip{margin:9px 12px;padding:11px 12px;border-radius:14px;background:#fff7e6;color:#6f5b37;font-size:10px;line-height:1.5}.tripTip b{display:block;font-size:11px;margin-bottom:3px}.tripTip span{display:block}
+.selectedBar{display:flex;justify-content:space-between;align-items:center}.favBtn{border:0;background:#fff4e5;color:#9b682d;border-radius:999px;padding:7px 9px;font-size:10px;font-weight:900}.site.disabled{background:#eef1ef;color:#8a9694;pointer-events:none}
+
+.travelTabs{display:flex;gap:6px;padding:8px 10px;background:#fff;position:sticky;top:0;z-index:1001;box-shadow:0 2px 10px #0000000b}.travelTab{flex:1;border:0;background:#f4f7f5;color:#41615f;border-radius:12px;padding:10px 5px;font-size:11px;font-weight:900}.travelTab.active{background:#078d86;color:#fff}
+.travelPanel{display:none;background:#fff}.travelPanel.active{display:block}
+.travelHero{padding:16px 14px 10px;background:linear-gradient(135deg,#dff8f4,#fff4df)}.travelHero h2{margin:0 0 5px;font-size:19px}.travelHero p{margin:0;color:#657573;font-size:11px;line-height:1.55}
+.travelCards{padding:8px 10px 20px}.travelCard{background:#fff;border:1px solid #e2e7e4;border-radius:18px;margin:9px 2px;padding:13px;box-shadow:0 4px 14px #0000000a}.travelCard .tcTop{display:flex;gap:10px;align-items:flex-start}.travelIcon{font-size:32px;line-height:1}.travelCard h3{margin:0;font-size:15px}.travelMeta{margin-top:3px;font-size:10px;color:#778583}.travelTags{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}.travelTags span{background:#eaf6f4;color:#286965;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900}.travelCard p{margin:7px 0;font-size:11px;line-height:1.55;color:#566563}.travelActions{display:flex;gap:7px;margin-top:9px}.travelActions a{flex:1;text-align:center;text-decoration:none;padding:9px 5px;border-radius:11px;font-size:10px;font-weight:900}.travelActions .go{background:#fff1dc;color:#86591f;border:1px solid #f0d2a6}.travelActions .official{background:#078d86;color:#fff}
+.marketBadge{display:inline-block;background:#f3a04b;color:#fff;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900}.scheduleBox{margin:10px 12px;padding:12px;border-radius:16px;background:#fff7e6;border:1px solid #f0d9ac}.scheduleBox b{font-size:12px}.scheduleBox p{margin:4px 0 0;font-size:10px;line-height:1.5;color:#705e42}
+
+.card{scroll-margin-top:12px}.card .heroPhoto{display:block;width:100%;max-height:300px;object-fit:cover}.card .noPhoto{height:180px;display:flex;align-items:center;justify-content:center;background:#f4eee4;font-size:56px}.card .body{padding:14px 16px 18px}.card .body h2{margin:8px 0 4px;font-size:21px;color:#243d3b}.card .body h3{margin:14px 0 4px;font-size:13px;color:#286c68}.card .body p{margin:4px 0;font-size:12px;line-height:1.65;color:#536563}.card .price{font-size:12px;font-weight:900;color:#795d36}.pillRow{display:flex;gap:5px;flex-wrap:wrap}.pill{display:inline-block;background:#edf7f5;color:#2b6c69;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900}
+<style>.activeFilterNote{margin:0;padding:7px 16px;background:#eef8f6;color:#26716d;text-align:center;font-size:10px;font-weight:900;border-top:1px solid #e1efec;border-bottom:1px solid #e1efec}.photoGallery{display:flex;position:relative;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;padding:0 0 7px;background:#f5efe4;-webkit-overflow-scrolling:touch;scrollbar-width:none}.photoGallery::-webkit-scrollbar{display:none}.photoSlide{flex:0 0 92%;scroll-snap-align:center;position:relative}.photoGallery .foodphoto{display:block;width:100%;height:250px;object-fit:cover;background:#eee}.photoGallery .photoCaption{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.58);color:#fff;border-radius:999px;padding:4px 8px;font-size:9px;font-weight:800}.photoGallery:after{content:"← 写真を横にスワイプ →";position:absolute;bottom:8px;left:8px;background:rgba(255,255,255,.86);color:#316d69;border-radius:999px;padding:4px 8px;font-size:9px;font-weight:900}</style></style>
+</head>
+<body>
+<header><h1>🌴 GUAM FAMILY TRAVEL MAP</h1><div class="sub">iPhoneで見る、グアム旅行専用グルメ＆遊びMAP</div></header>
+<div class="travelTabs">
+<button class="travelTab active" data-tab="food">🍴 グルメ</button>
+<button class="travelTab" data-tab="play">🏝️ 遊ぶ</button>
+<button class="travelTab" data-tab="market">🧺 朝市・夜市</button>
+<button class="travelTab" data-tab="plan">📅 候補プラン</button>
+</div>
+<div id="foodPanel" class="travelPanel active"><div class="toolbar">
+<input id="search" class="search" placeholder="🔎 店名・料理名で検索">
+<div class="filters">
+      <button class="active" data-filter="all">すべて</button>
+      <button data-filter="朝食">🌅 朝食</button>
+      <button data-filter="ランチ">☀️ ランチ</button>
+      <button data-filter="ディナー">🌙 ディナー</button>
+    </div>
+    <div id="activeFilterNote" class="activeFilterNote">🍴 MAP：すべての店舗（28店舗）</div><div class="quickFilters">
+      <button class="qf active" data-q="all">🍴 全ジャンル</button>
+      <button class="qf" data-q="family">👨‍👩‍👧‍👦 子連れ</button>
+      <button class="qf" data-q="local">🇬🇺 グアム料理</button>
+      <button class="qf" data-q="photo">📸 写真あり</button>
+      <button class="qf" data-q="favorites">❤️ 保存済み</button>
+    </div>
+</div>
+<div id="map"></div>
+<div id="mapFallback" style="display:none;margin:12px;padding:14px;border-radius:14px;background:#fff4df;color:#6f5b37;font-size:12px;font-weight:800">MAPの読み込みに失敗しました。ページを再読み込みしてください。</div>
+<div class="card" id="card"></div><div class="howto"><b>🗺️ MAPの使い方</b><span>①「タモン」「ハガニア」でエリアを拡大　②📍をタップ　③料理・価格・公式サイトを確認</span></div><div class="tripTip">🇬🇺 <b>グアムごはんの選び方</b><span>チャモロ料理・シーフードから、日本食・韓国・タイ・フィリピン・アメリカンまで幅広いので、旅行中はジャンルを変えて楽しむのがおすすめ。</span></div>
+<div class="list"><b>🍴 店舗一覧</b><div id="list"></div></div>
+<div class="note"><b>📍 MAPについて</b><br>このMAPは、元資料の住所をもとに「おおまかなエリア」を確認できるようにしたものです。ピンは住所の番地レベルではなく、エリア確認用の近似配置です。正確な店舗位置・営業時間・価格はGoogle Mapsまたは公式サイトでご確認ください。</div>
+
+
+<div id="playPanel" class="travelPanel">
+  <div class="travelHero"><h2>🏝️ 6歳・8歳と遊ぶ候補</h2><p>「絶対行きたい」と「海況や体力で選ぶ」を分けて、旅行中に選びやすくまとめたよ。</p></div>
+  <div class="travelCards" id="playCards"></div>
+</div>
+<div id="marketPanel" class="travelPanel">
+  <div class="travelHero"><h2>🧺 朝市・ナイトマーケット</h2><p>今回の旅行では<strong>水曜夜のチャモロビレッジ</strong>と<strong>土曜朝のデデド朝市</strong>を優先候補に。</p></div>
+  <div class="scheduleBox"><b>🌙 水曜夜：Chamorro Village Wednesday Night Market</b><p>毎週水曜 17:30〜21:30。ローカルフード、BBQ、フルーツジュース、工芸品、音楽・ダンスなど。子ども連れでも楽しみやすい夜イベント。</p></div>
+  <div class="scheduleBox"><b>🌅 土曜朝：Dededo Flea Market / 朝市</b><p>毎週土・日曜の朝6:00から。食べ物、フルーツ・野菜、雑貨、衣類などが並び、ローカルの朝ごはんも楽しめる。</p></div>
+  <div class="travelCards" id="marketCards"></div>
+</div>
+<div id="planPanel" class="travelPanel">
+  <div class="travelHero"><h2>📅 まだ予定が決まってなくてもOK</h2><p>今は「候補」を保存しておいて、天気・海況・子どもたちの元気さを見て当日に組み替えるのが使いやすい。</p></div>
+  <div class="scheduleBox"><b>⭐ まず固定する候補</b><p>① リゾナーレのウォーターパーク　② リティディアン　③ 水曜夜チャモロビレッジ　④ 土曜朝デデド朝市</p></div>
+  <div class="scheduleBox"><b>🤿 海の日に候補</b><p>Ypao Beach / Gun Beach / Fish Eye / Guam Ocean Park。海況や年齢条件を確認して選択。</p></div>
+  <div class="scheduleBox"><b>👨‍👩‍👧‍👦 6歳・8歳向けのバランス</b><p>「プールで思い切り遊ぶ日」「海で魚を見る日」「街・市場の日」を混ぜると、子どもが飽きにくく移動疲れも抑えやすい。</p></div>
+</div>
+</div><script>
+const PLAY_DATA=[
+ {icon:"🏊",name:"リゾナーレグアム ウォーターパーク",meta:"タムニング / ハガニア湾側",tags:["絶対候補","6歳・8歳◎","プール"],desc:"今回の旅行の本命。360mの流れるプール、キッズプール、ウォータースライダー、ウェーブプールなどがあり、子どもが一日遊びやすい。現在もウォーターパークは通常営業。スライダーは身長122cm以上などの条件があるので、当日は身長条件を確認。",official:"https://hoshinoresorts.com/ja/hotels/risonareguam/",maps:"https://www.google.com/maps/search/?api=1&query=RISONARE+Guam",priority:"must"},
+ {icon:"🏖️",name:"リティディアン・ビーチ",meta:"グアム北部",tags:["絶対候補","自然","ビーチ"],desc:"グアム北部の自然を感じられる美しいビーチ候補。市街地のビーチとは雰囲気がかなり違うので、旅行中に『グアムらしい自然』を入れる日に向く。天候・波・道路状況を当日確認して行くのがおすすめ。",official:"https://www.visitguam.com/",maps:"https://www.google.com/maps/search/?api=1&query=Ritidian+Beach+Guam",priority:"must"},
+ {icon:"🐠",name:"Ypao Beach Park",meta:"タモン湾南端",tags:["シュノーケリング","6歳・8歳◎","無料候補"],desc:"家族でのシュノーケリング候補としてかなり有力。グアム政府観光局はYpaoを海洋保護区の『天然の水族館』として紹介し、魚やサンゴを見やすい場所として挙げている。タモン周辺なので移動もしやすい。",official:"https://www.visitguam.com/listing/ypao-beach-park/5620/",maps:"https://www.google.com/maps/search/?api=1&query=Ypao+Beach+Park+Guam",priority:"snorkel"},
+ {icon:"🐟",name:"Gun Beach",meta:"タモン北側",tags:["シュノーケリング","家族向け候補","海"],desc:"タモン湾周辺で海に入りたい日の候補。政府観光局は穏やかな水域でシュノーケリングを楽しみやすい場所として紹介している。海況が良い日にYpaoと比較して選ぶのがおすすめ。",official:"https://www.visitguam.com/things-to-do/adventures/snorkeling/",maps:"https://www.google.com/maps/search/?api=1&query=Gun+Beach+Guam",priority:"snorkel"},
+ {icon:"🐠",name:"Fish Eye Marine Park",meta:"ピティ",tags:["シュノーケリング","海中展望塔","子ども◎"],desc:"『泳ぐのが不安な子も海を楽しむ』選択肢として強い。海中展望塔で濡れずに魚を見られ、Piti Bayではシュノーケリングもできる。小さい子どもの参加実績も案内されている。",official:"https://www.fisheyeguam.com/",maps:"https://www.google.com/maps/search/?api=1&query=Fish+Eye+Marine+Park+Guam",priority:"family"},
+ {icon:"🤿",name:"Guam Ocean Park",meta:"アポトガン",tags:["シュノーケリング","6歳〜","マリンスポーツ"],desc:"6歳から参加できるシュノーケルツアーがあり、ライフジャケット着用＋ガイド付き。子どもが『初めてのシュノーケリング』をするなら、ビーチで自由に入るよりツアー型が安心という選択肢。",official:"https://guamoceanpark.com/activity/GU101-00002014/",maps:"https://www.google.com/maps/search/?api=1&query=Guam+Ocean+Park",priority:"snorkel"}
+];
+const MARKET_DATA=[
+ {icon:"🌙",name:"Chamorro Village Wednesday Night Market",meta:"ハガニア / 毎週水曜 17:30〜21:30",tags:["今回行く","ローカルフード","子ども◎"],desc:"BBQ、ローカル料理、フレッシュジュース、工芸品、音楽・ダンスなどが集まる、グアムらしさを感じやすい夜。子ども向けの文化体験やカリバオ（スイギュウ）関連の体験も案内されている。",official:"https://www.visitguam.com/event/chamorro-village%3A-wednesday-night-market/518361/",maps:"https://www.google.com/maps/search/?api=1&query=Chamorro+Village+Guam"},
+ {icon:"🌅",name:"Dededo Flea Market / デデドの朝市",meta:"デデド / 毎週土・日 6:00〜",tags:["今回行く","朝ごはん","ローカル"],desc:"早朝から屋台、農産物、雑貨、衣類などが並ぶローカル感のある朝市。フライドライス＋卵＋肉などの島らしい朝ごはんも楽しめる。土曜朝に行く予定なら、早起きして朝ごはん込みで楽しむのがおすすめ。",official:"https://www.visitguam.com/listing/%E3%83%87%E3%83%87%E3%83%89%E3%81%AE%E6%9C%9D%E5%B8%82/522/",maps:"https://www.google.com/maps/search/?api=1&query=Dededo+Flea+Market+Guam"},
+ {icon:"🌙",name:"Tumon Night Market",meta:"日曜 17:00〜21:00 / 2026夏季",tags:["追加候補","タモン","子ども◎"],desc:"日曜夜の候補。2026年夏季はTumon Sands Plaza前で開催され、ローカル料理、フードトラック、ライブ、文化体験、子ども向けのペッティングズーなどが案内されている。旅行最終日の日曜夜に予定を残しておくなら候補。",official:"https://www.visitguam.com/tnm/",maps:"https://www.google.com/maps/search/?api=1&query=Tumon+Sands+Plaza+Guam"}
+];
+function travelCard(x){
+ return `<article class="travelCard"><div class="tcTop"><div class="travelIcon">${x.icon}</div><div><h3>${x.name}</h3><div class="travelMeta">${x.meta}</div></div></div><div class="travelTags">${x.tags.map(t=>`<span>${t}</span>`).join('')}</div><p>${x.desc}</p><div class="travelActions"><a class="go" href="${x.maps}" target="_blank" rel="noopener">📍 Google Maps</a><a class="official" href="${x.official}" target="_blank" rel="noopener">🌐 詳細・公式</a></div></article>`;
+}
+document.getElementById('playCards').innerHTML=PLAY_DATA.map(travelCard).join('');
+document.getElementById('marketCards').innerHTML=MARKET_DATA.map(travelCard).join('');
+document.querySelectorAll('.travelTab').forEach(tab=>tab.addEventListener('click',()=>{
+ document.querySelectorAll('.travelTab').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.travelPanel').forEach(x=>x.classList.remove('active'));
+ tab.classList.add('active');
+ document.getElementById(tab.dataset.tab+'Panel').classList.add('active');
+ window.scrollTo({top:0,behavior:'smooth'});
+}));
+</script>
 <script>
 const DATA=[{"id":1,"name":"The Kracked Egg","meal":"朝食","menu":"エッグベネディクト（スモークサーモン）／SOS Local Motion／ホットケーキメドレー／トロピカルディライト","price":"$10〜16","area":"Tumon / Tamuning","lat":13.5147,"lng":-144.8048,"maps":"https://www.google.com/maps/search/?api=1&query=The+Kracked+Egg+Guam","official":"https://www.thekrackedegg.com/","emoji":"🥚","comment":"🌅 朝食の王道。Lox Florentineはスモークサーモン＋ほうれん草＋ポーチドエッグ＋オランデーズをイングリッシュマフィンに重ねたエッグベネディクト。塩気のあるサーモンと半熟卵、濃厚ソースの相性がよく、アメリカンブレックファストを楽しみたい日におすすめ。Hot Cake Medleyは3種類選べて家族でシェアしやすい。","image":"https://amurublog.com/wp-content/uploads/2020/05/IM-GUAM2072-730x410.jpg","genre":"アメリカン","genreEmoji":"🍖","family":true,"local":false,"areaShort":"タモン","image2":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_599%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/Kracked_Egg_e5a434c5-21c6-4800-a60c-1fef6383aff1.jpg"},{"id":2,"name":"Little Pika's","meal":"朝食","menu":"チャモロソーセージベネディクト／ロコモコ／カルーアフレンチトースト","price":"$12〜17","area":"Tumon","lat":13.5155,"lng":-144.8056,"maps":"https://www.google.com/maps/search/?api=1&query=Little+Pika%27s+Guam","official":"https://www.pikascafeguam.com/","emoji":"🍳","comment":"🌅 Chamorroソーセージのベネディクトは、香ばしいソーセージ＋半熟卵＋オランデーズのローカル感ある朝食。ロコモコならご飯＋ハンバーグ＋グレービー＋卵でボリューム満点。キッズメニューもあり、家族旅行との相性が◎。","image":"https://ak-d.tripcdn.com/images/1mi3n224x8xibqqy701E8.jpg?proc=source%2Ftrip","genre":"チャモロ","genreEmoji":"🇬🇺","family":true,"local":true,"areaShort":"タモン","image2":"https://static.wixstatic.com/media/4f9262_02fcb761bc8b42e8a5cc868e76ddab83~mv2.jpg/v1/fill/w_811%2Ch_541%2Cal_c%2Cq_85%2Cusm_0.66_1.00_0.01%2Cenc_auto/4f9262_02fcb761bc8b42e8a5cc868e76ddab83~mv2.jpg"},{"id":3,"name":"Shirley's Restaurant","meal":"朝食","menu":"コーンドビーフハッシュ＋ポルトガルソーセージ＋卵／クラブサンド／スパイシースパムフライドライス","price":"$10〜20","area":"Apotgan","lat":13.4925,"lng":-144.7988,"maps":"https://www.google.com/maps/search/?api=1&query=Shirley%27s+Restaurant+Guam","official":"https://www.facebook.com/shirleystamuning/","emoji":"🍳","comment":"🍳 グアムの家庭料理系ファミレス。コーンビーフハッシュは牛肉とポテトを香ばしく焼いて卵と合わせる定番。チャモロソーセージやガーリック系フライドライスもあり、ローカル食堂っぽい朝ごはんを食べたい人向け。","image":"","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"Apotgan","image2":"https://www.guam.co.kr/data/restaurant/144583274139874000.jpg"},{"id":4,"name":"King's Restaurants","meal":"朝食","menu":"ロコモコ／カドンピカ／パンケーキ／フライドライス","price":"$10〜20","area":"Harmon","lat":13.522,"lng":-144.8225,"maps":"https://www.google.com/maps/search/?api=1&query=King%27s+Restaurants+Guam","official":"","emoji":"🍳","comment":"🍳 ロコモコは白ご飯＋ハンバーグ＋グレービー＋目玉焼きの太平洋エリア定番。肉＋ご飯＋卵で満足感が高く、朝からしっかり食べたい日にぴったり。パンケーキやフライドライスも家族で選びやすい。","image":"https://fs.tour.ne.jp/index.php/file_manage/disp_file/?fid=review%2F629%2F201911%2F14f49b55c5f5307cf5dba1100b84785c.jpg&w=1080","genre":"その他","genreEmoji":"🍴","family":true,"local":false,"areaShort":"Harmon"},{"id":5,"name":"Jack in the Box","meal":"ランチ","menu":"マンチーミール／Sourdough Jack／Classic Buttery Jack／カーリーフライ／タコス","price":"$10〜20","area":"Tamuning","lat":13.505,"lng":-144.806,"maps":"https://www.google.com/maps/search/?api=1&query=Jack+in+the+Box+Guam","official":"https://www.jackinthebox.com/","emoji":"🍔","comment":"🍔 Sourdough Jackは香ばしいサワードウにビーフパティ、ベーコン、チーズ、トマトなどを合わせた看板系バーガー。カーリーフライやタコスも一緒に頼めるのでシェアしやすく、24時間営業の店舗は夜食候補にも便利。","image":"https://www.mashed.com/img/gallery/43-fast-food-items-you-need-to-eat-before-you-die/jack-in-the-boxs-sourdough-jack-1653333422.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":false,"areaShort":"Tamuning"},{"id":6,"name":"Panda Express","meal":"ランチ","menu":"オレンジチキン／ハニーセサミチキン／北京牛肉／ハニーウォルナッツシュリンプ／チャーハン","price":"$10〜20","area":"Hagåtña","lat":13.4748,"lng":-144.751,"maps":"https://www.google.com/maps/search/?api=1&query=Panda+Express+Guam","official":"https://www.pandaexpress.com/","emoji":"🍊","comment":"🍊 オレンジチキンはカリッと揚げた鶏肉に甘酸っぱく濃いめのオレンジソースを絡めた定番。北京牛肉やチャーハンと組み合わせてプレートにでき、家族で好みが分かれても選びやすい。","image":"https://img.p.mapq.st/?q=75&url=https%3A%2F%2Fs3-media0.fl.yelpcdn.com%2Fbphoto%2FWgxqj-NdNblnPf4m-AzLOA%2Fl.jpg&w=3840","genre":"アメリカン","genreEmoji":"🍖","family":true,"local":false,"areaShort":"ハガニア"},{"id":7,"name":"Jollibee","meal":"ランチ","menu":"Chickenjoy／Jollyスパゲティ／グレイビーハンバーグ","price":"$10〜20","area":"Liguan","lat":13.482,"lng":-144.824,"maps":"https://www.google.com/maps/search/?api=1&query=Jollibee+Guam","official":"https://www.jollibeeusa.com/","emoji":"🍗","comment":"🍗 Chickenjoyは衣がカリッとしたフライドチキンを濃厚グレービーにつけて食べるフィリピン発の看板。Jollyスパゲティは甘めのソースが特徴で子どもにも選びやすく、Peach Mango Pieまで含めて日本では少し珍しい味を楽しめる。","image":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_600%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/jol_6_a83d8779-dc4f-459e-a238-dc2d086b0003.jpg","genre":"フィリピン","genreEmoji":"🍗","family":true,"local":false,"areaShort":"Liguan","image2":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_600%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/jol_6_a83d8779-dc4f-459e-a238-dc2d086b0003.jpg"},{"id":8,"name":"Meskla Dos（Upper Tumon）","meal":"ランチ","menu":"Shrimp “Uhang” Burger／ファイヤークラッカースパイスバーガー／スイートポテトフライ","price":"$12〜19","area":"Upper Tumon","lat":13.524,"lng":-144.81,"maps":"https://www.google.com/maps/search/?api=1&query=Meskla+Dos+Upper+Tumon+Guam","official":"https://mesklaguam.com/","emoji":"🍔","comment":"🍔 Uhang Burgerはエビのパティをパン粉で揚げ、タルタル系ソースで仕上げた名物級バーガー。普通のビーフバーガーとは違う、グアムらしいシーフード系バーガーを食べたいならここ。","image":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":true,"areaShort":"タモン","image2":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg"},{"id":9,"name":"Meskla Dos（Lower Tumon）","meal":"ランチ","menu":"Shrimp “Uhang” Burger＋スパイシーマヨ／チキンストリップ／ビーフ＆ボーンレスポークリブ","price":"$12〜19","area":"Lower Tumon","lat":13.51,"lng":-144.805,"maps":"https://www.google.com/maps/search/?api=1&query=Meskla+Dos+Lower+Tumon+Guam","official":"https://mesklaguam.com/","emoji":"🍔","comment":"🍔 Shrimp Uhang Burgerはエビの旨味と揚げた香ばしさが主役。スイートポテトフライを合わせると甘じょっぱい組み合わせになり、シェアにも向く。ローカル食材を現代的なバーガーにした一品。","image":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":true,"areaShort":"タモン","image2":"https://tblg.k-img.com/restaurant/images/Rvw/56986/640x640_rect_56986086.jpg"},{"id":10,"name":"Hambros","meal":"ランチ","menu":"ベーコンチーズバーガー／シュリンプサラダ＋クアトロコンボ／オニオンリング","price":"$10〜20","area":"Tumon","lat":13.513,"lng":-144.8065,"maps":"https://www.google.com/maps/search/?api=1&query=Hambros+Guam","official":"","emoji":"🍔","comment":"🍔 肉厚パティのボリューム系バーガーが中心。ベーコンチーズバーガーは肉＋チーズ＋ベーコンの王道で、オニオンリングを添えるとアメリカン感がさらにアップ。タモン中心から歩いて寄りやすいのも魅力。","image":"","genre":"バーガー","genreEmoji":"🍔","family":false,"local":false,"areaShort":"タモン","image2":"https://www.guam.co.kr/data/restaurant/155589755785334400.jpg"},{"id":11,"name":"FujiIchiban Guam","meal":"ランチ","menu":"醤油・豚骨ラーメン／辛辛スパイシーラーメン／唐揚げ／チャーハン","price":"$10〜20","area":"Tumon","lat":13.512,"lng":-144.8068,"maps":"https://www.google.com/maps/search/?api=1&query=FujiIchiban+Guam","official":"https://fujiichiguam.com/","emoji":"🍜","comment":"🍜 味噌・醤油・豚骨系ラーメンにチャーシュー、味玉、ねぎなどを合わせる日本食。グアム料理が続いて日本食が恋しくなった時にも便利。唐揚げやチャーハンを追加して家族でシェアするのもおすすめ。","image":"https://image.jimcdn.com/app/cms/image/transf/none/path/sf9e43b9122b4e5ae/image/i2c64dcccaf962d21/version/1683441518/image.jpg","genre":"日本食","genreEmoji":"🍣","family":true,"local":true,"areaShort":"タモン","image2":"https://image.jimcdn.com/app/cms/image/transf/none/path/sf9e43b9122b4e5ae/image/i2c64dcccaf962d21/version/1683441518/image.jpg"},{"id":12,"name":"Sakura Dining","meal":"ランチ","menu":"梅鉄板セット／寿司／刺身／天ぷら","price":"$10〜20","area":"Tamuning","lat":13.492,"lng":-144.8,"maps":"https://www.google.com/maps/search/?api=1&query=Sakura+Dining+Guam","official":"https://sakuraguam.com/","emoji":"🍣","comment":"🍣 寿司・刺身・天ぷらなど、日本食をしっかり食べたい日に向く店。寿司プラッターなら複数種類をまとめて楽しめ、家族で取り分けやすい。グアム料理が続いた日の日本食リセットにも。","image":"https://cdn.myordering.online/biteheist-uploads/restaurant/1763656220140.webp","genre":"日本食","genreEmoji":"🍣","family":true,"local":true,"areaShort":"Tamuning"},{"id":13,"name":"Pieology Pizzeria","meal":"ランチ","menu":"カスタムピザ／カルツォーネ／プルコギ薄皮ピザ","price":"$10〜20","area":"Apotgan","lat":13.492,"lng":-144.802,"maps":"https://www.google.com/maps/search/?api=1&query=Pieology+Pizzeria+Guam","official":"https://pieology.com/","emoji":"🍕","comment":"🍕 生地・ソース・具材を自分好みに組み合わせるカスタムピザが魅力。肉・野菜・チーズなど好みが違う家族でも、それぞれ好きなピザを作りやすい。","image":"https://images.happycow.net/venues/1024/15/17/hcmp151717_1931630.jpeg","genre":"ピザ","genreEmoji":"🍕","family":true,"local":false,"areaShort":"Apotgan"},{"id":14,"name":"Ben N' Yan's","meal":"ランチ","menu":"オックステール・カレカレ／クリスピーポーク・シシグ／上海風ルンピア","price":"$10〜20","area":"Upper Tumon","lat":13.52,"lng":-144.8105,"maps":"https://www.google.com/maps/search/?api=1&query=Ben+N+Yans+Guam","official":"","emoji":"🍖","comment":"🍖 フィリピン／グアム系の味を楽しみたい人向け。カレカレは肉と野菜を濃厚なピーナッツ系ソースで煮込む料理、シシグは細かい肉を香ばしく炒めたご飯が進む系。ルンピアはパリッとした春巻きでシェアしやすい。","image":"","genre":"フィリピン","genreEmoji":"🍗","family":true,"local":true,"areaShort":"タモン"},{"id":15,"name":"Manang Pika（Tumon）","meal":"ランチ","menu":"ビリアタコス／フィッシュタコス（マンゴーサルサ）／シシグタコス／チュロス","price":"$10〜20","area":"Tumon","lat":13.514,"lng":-144.805,"maps":"https://www.google.com/maps/search/?api=1&query=Manang+Pika+Tumon+Guam","official":"https://www.manangpika.com/","emoji":"🌮","comment":"🌮 フィリピン料理とメキシコ料理のフュージョン。ビリアタコスは煮込んだ肉の旨味をタコスで楽しむタイプ、シシグタコスは香ばしい豚肉系の具が主役。タコス＋チュロスでカジュアルランチに。","image":"https://static.wixstatic.com/media/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg/v1/fill/w_1000%2Ch_751%2Cal_c%2Cq_85%2Cusm_0.66_1.00_0.01/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg","genre":"フィリピン","genreEmoji":"🍗","family":false,"local":false,"areaShort":"タモン","image2":"https://static.wixstatic.com/media/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg/v1/fill/w_1000%2Ch_751%2Cal_c%2Cq_85%2Cusm_0.66_1.00_0.01/c43fd9_07879b542b5d467fa8d08cf7befa42c2~mv2.jpg"},{"id":16,"name":"Beachin Shrimp","meal":"ランチ","menu":"ビーチンシュリンプ／カリフォルニア・シュリンプ・ロール／エビフライバーガー","price":"$14〜25","area":"Tumon","lat":13.5145,"lng":-144.8052,"maps":"https://www.google.com/maps/search/?api=1&query=Beachin+Shrimp+Guam","official":"https://www.beachinshrimp.com/","emoji":"🍤","comment":"🍤 エビを主役にしたシーフード店。Beachin Shrimpやココナッツシュリンプは、プリッとしたエビに香ばしい衣を合わせるタイプで、エビ好きには分かりやすいチョイス。シーフード好きの家族でシェアがおすすめ。","image":"","genre":"バーガー","genreEmoji":"🍔","family":true,"local":false,"areaShort":"タモン","image2":"https://blog.kakaocdn.net/dna/x6qyF/btqBziRIFKh/AAAAAAAAAAAAAAAAAAAAAG6i9TIGzZiSHpocRIjJLl7nvapxIeH8cpl5J6om4-Jc/img.jpg?allow_ip=&allow_referer=&credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1777561199&signature=AVTm0OkRFtioNCuCQxbfmHjE660%3D"},{"id":17,"name":"Lee Garden","meal":"ランチ","menu":"揚げ焼きそば／麻婆豆腐／天津飯／エビチリ","price":"$8〜15","area":"Tumon","lat":13.5148,"lng":-144.8058,"maps":"https://www.google.com/maps/search/?api=1&query=Lee+Garden+Guam","official":"","emoji":"🥢","comment":"🥢 揚げ焼きそばは香ばしく焼いた麺に肉・エビ・野菜を合わせた食べ応えメニュー。麻婆豆腐やエビチリもご飯が進むので、複数品を注文して取り分ける食べ方と相性がいい。","image":"https://deliverlogic-common-assets.s3.amazonaws.com/editable/images/goodtogo/menuitems/25498.png","genre":"シーフード","genreEmoji":"🍤","family":false,"local":false,"areaShort":"タモン"},{"id":18,"name":"Three Squares Restaurant","meal":"ランチ","menu":"レッドライス／ティナラカトネ／フライドチキン／ビーフブリスケット","price":"$10〜20","area":"Tamuning","lat":13.487,"lng":-144.803,"maps":"https://www.google.com/maps/search/?api=1&query=Three+Squares+Restaurant+Guam","official":"","emoji":"🍚","comment":"🍚 ローカルなチャモロ料理を試したい人におすすめ。レッドライスはアチョーテで色付けしたグアム定番のご飯。ティナラカトネなどの肉料理と合わせると、グアムらしいプレートランチ感を楽しめる。","image":"https://assets.simpleviewinc.com/sv-guam/image/upload/c_fill%2Ch_600%2Cq_75%2Cw_800/v1/cms_resources/clients/guam/Three_Sqare3_8fdb753f-e09d-4464-99a1-153c6c64d03a.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"Tamuning","image2":"https://assets.simpleviewinc.com/sv-guam/image/fetch/c_fill%2Ch_630%2Cq_76%2Cw_950/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/gvb_1654845286_3SQ---Local-Sampler_32CCD6BF-5056-A36A-0CFA039A61096402-32ccd5695056a36_32ccdff2-5056-a36a-0cde0b6abf6db4ab.jpg"},{"id":19,"name":"San Jung","meal":"ランチ","menu":"キムチチゲ／キムチチャーハン／味付けカルビ／チーズタッカルビ／ビビンバ","price":"$10〜20","area":"Harmon","lat":13.5225,"lng":-144.822,"maps":"https://www.google.com/maps/search/?api=1&query=San+Jung+Guam","official":"","emoji":"🥘","comment":"🥘 韓国料理店。キムチチゲは酸味と辛味のある熱々スープ、ビビンバはご飯＋野菜＋肉などを混ぜて食べる定番。味付けカルビやチーズタッカルビもあり、辛い料理好きなら候補。","image":"https://media.triple.guide/triple-cms/c_limit%2Cf_auto%2Ch_1024%2Cw_1024/8f9ea044-1a60-465f-8dcf-28ae324478bc.jpeg","genre":"韓国","genreEmoji":"🥘","family":false,"local":false,"areaShort":"Harmon","image2":"https://media.triple.guide/triple-cms/c_limit%2Cf_auto%2Ch_1024%2Cw_1024/97b12f2a-0021-400a-83c1-1b85e5b4c6a0.jpeg"},{"id":20,"name":"Caliente Restaurant","meal":"ランチ","menu":"ステーキファヒータ／カリフォルニアブリトー／チキンファヒータ／エンチラーダ","price":"$10〜20","area":"Hagåtña","lat":13.4748,"lng":-144.7515,"maps":"https://www.google.com/maps/search/?api=1&query=Caliente+Restaurant+Guam","official":"","emoji":"🌮","comment":"🌮 メキシカン系。ファヒータは焼いた肉と野菜をトルティーヤなどと合わせて食べるスタイルで、香ばしさとスパイス感を楽しめる。ブリトーやエンチラーダもあり、ボリューム重視のランチに。","image":"","genre":"メキシカン","genreEmoji":"🌮","family":false,"local":false,"areaShort":"ハガニア"},{"id":21,"name":"Chili's Grill & Bar","meal":"ディナー","menu":"「3 For Me」セット／ケサディーヤ／マルガリータグリルドチキン／ベビーバックリブ","price":"$10〜30","area":"Tumon","lat":13.513,"lng":-144.806,"maps":"https://www.google.com/maps/search/?api=1&query=Chili%27s+Guam","official":"https://www.chilis.com/","emoji":"🍖","comment":"🔥 アメリカン・テックスメックス系。ベビーバックリブは骨付きポークを甘辛いBBQソースで仕上げた肉料理で写真映えも◎。ケサディーヤなどシェアしやすい料理もあり、家族で取り分けるのがおすすめ。","image":"https://assets.simpleviewinc.com/sv-guam/image/fetch/c_limit%2Cq_75%2Cw_830/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/TEXAS-SIZE-RIBS_A644AA3D-5056-A36A-0C6118FFF1F79EC2-a644a9805056a36_a644aaa4-5056-a36a-0cd16a6b84e6dd67.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":true,"local":false,"areaShort":"タモン","image2":"https://assets.simpleviewinc.com/simpleview/image/upload/c_fill%2Ch_520%2Cq_75%2Cw_785/v1/crm/guam/Array---Mix---Burger---Rib---Fajita_A6614755-5056-A36A-0C374F839827BADF-a66146d85056a36_a66147af-5056-a36a-0c501aa16ccbdf0c.jpg"},{"id":22,"name":"Jamaican Grill","meal":"ディナー","menu":"バリュープラッター（リブ＋チキン）／ジャークチキン／ジャークバーガー／BBQリブ","price":"$10〜20","area":"Tamuning","lat":13.503,"lng":-144.8005,"maps":"https://www.google.com/maps/search/?api=1&query=Jamaican+Grill+Guam","official":"https://jamaicangrill.com/","emoji":"🔥","comment":"🔥 ジャークチキンやリブなど、スパイスとBBQ感のある肉料理が主役。バリュープラッターならリブ＋チキンをまとめて食べられ、豪快な肉プレートを楽しみたい日にぴったり。","image":"https://www.airial.travel/_next/image?q=70&url=https%3A%2F%2Fmedia-cdn.tripadvisor.com%2Fmedia%2Fphoto-w%2F24%2Fe4%2F8b%2F99%2Fthe-triple-combo-ribs.jpg&w=3840","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":false,"areaShort":"Tamuning"},{"id":23,"name":"Mosa's Joint","meal":"ディナー","menu":"Spinach, Mushroom & Bleu Cheese Burger／ルーベンサンド／アボカドポキ","price":"$10〜20","area":"Hagåtña","lat":13.4748,"lng":-144.75,"maps":"https://www.google.com/maps/search/?api=1&query=Mosa%27s+Joint+Guam","official":"","emoji":"🍔","comment":"🍔 カジュアルなバーガー店。Spinach, Mushroom & Bleu Cheese Burgerはほうれん草・きのこ・ブルーチーズの風味が加わる大人向けバーガー。チェーン系とは違うバーガーを食べたい日におすすめ。","image":"https://cdn-ak.f.st-hatena.com/images/fotolife/k/kokawauso/20190930/20190930220647.jpg","genre":"バーガー","genreEmoji":"🍔","family":true,"local":false,"areaShort":"ハガニア","image2":"https://cdn-ak.f.st-hatena.com/images/fotolife/k/kokawauso/20190930/20190930220647.jpg"},{"id":24,"name":"PROA Restaurant","meal":"ディナー","menu":"チャモロスタイルBBQ（ショートリブ・スペアリブ＋ライス＋サラダ）","price":"BBQ $21〜25／メイン $23〜33","area":"Tumon","lat":13.512,"lng":-144.805,"maps":"https://www.google.com/maps/search/?api=1&query=PROA+Restaurant+Guam","official":"https://www.proaguam.com/","emoji":"🔥","comment":"🔥 グアムでチャモロBBQを狙うなら有力候補。ショートリブやスペアリブなどを香ばしく焼き、レッドライスやサラダと合わせる豪快なプレート。ディナーの本命候補に。","image":"https://livedoor.blogimg.jp/drkgw2012-gourmet_travelogue/imgs/f/6/f6b09cfa-s.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"タモン","image2":"https://tblg.k-img.com/restaurant/images/Rvw/248604/640x640_rect_9ff9d6399ecd1992f55eb883bea16652.jpg"},{"id":25,"name":"California Pizza Kitchen","meal":"ディナー","menu":"ハワイアンBBQチキンピザ／クリスピーピザ／パスタ","price":"$15〜25","area":"Tumon","lat":13.5142,"lng":-144.8052,"maps":"https://www.google.com/maps/search/?api=1&query=California+Pizza+Kitchen+Guam","official":"https://www.cpk.com/","emoji":"🍕","comment":"🍕 ハワイアンBBQチキンピザはBBQソースの甘辛さにチキン、チーズ、パイナップルなどを合わせた人気系ピザ。甘じょっぱい味が好きならおすすめ。家族でシェアしやすい。","image":"https://scotscoop.com/wp-content/uploads/2013/12/IMG_0103.jpg","genre":"チャモロ","genreEmoji":"🇬🇺","family":true,"local":false,"areaShort":"タモン","image2":"https://www.tripcoupon.com/upload_files/MULS520230831052538.jpg"},{"id":26,"name":"Ban Thai","meal":"ディナー","menu":"トムヤムクン／グリーンカレー／マッサマンカレー／Ban Thai Sampler","price":"$12〜22","area":"Tamuning","lat":13.5045,"lng":-144.801,"maps":"https://www.google.com/maps/search/?api=1&query=Ban+Thai+Guam","official":"https://www.banthaiguam.com/","emoji":"🍲","comment":"🍲 トムヤムクンはエビの旨味に酸味・辛味・ハーブの香りを重ねたタイ料理の代表格。グリーンカレーやマッサマンカレーはココナッツのまろやかさがあり、辛さが苦手な人にも比較的選びやすい。","image":"https://assets.simpleviewinc.com/simpleview/image/fetch/c_limit%2Cq_75%2Cw_830/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/f6_683570ED-5056-A36A-0CCA36DA8D895F93-68356f2c5056a36_6835790e-5056-a36a-0c9120f8ba5dff9c.jpg","genre":"シーフード","genreEmoji":"🍤","family":false,"local":false,"areaShort":"Tamuning","image2":"https://assets.simpleviewinc.com/simpleview/image/upload/crm/guam/f3_682DB163-5056-A36A-0CCC5EDB18F31981-682dafb95056a36_682db9ee-5056-a36a-0c9cb7a3743cd23b.jpg"},{"id":27,"name":"TGI Friday's","meal":"ディナー","menu":"フライデー ウイスキー グレイズ リブ／ハンバーガー／ステーキ／サンドウィッチ","price":"$15〜28","area":"Tamuning","lat":13.506,"lng":-144.802,"maps":"https://www.google.com/maps/search/?api=1&query=TGI+Fridays+Guam","official":"https://www.tgifridays.com/","emoji":"🍖","comment":"🍖 アメリカンな肉料理をがっつり食べたい日に。Whiskey Glaze系のリブは甘辛いグレーズを絡めた骨付き肉で、フライドポテトなどと合わせるとかなりボリューム満点。","image":"https://d34coi8mdyihzd.cloudfront.net/images/WHAT%27S-ON-19/Fridays-Signature-Glaze-62/MOBILE-90/fsg-header-540","genre":"バーガー","genreEmoji":"🍔","family":false,"local":false,"areaShort":"Tamuning","image2":"https://assets.simpleviewinc.com/sv-guam/image/fetch/c_limit%2Cq_75%2Cw_830/https%3A/assets.simpleviewinc.com/simpleview/image/upload/crm/guam/vd5_32B4926F-5056-A36A-0C98FFB31CBB7BE0-32b490705056a36_32b4a4b2-5056-a36a-0c68b47410b1fa99.jpg"},{"id":28,"name":"メスクラ チャモロ フュージョン ビストロ","meal":"ディナー","menu":"ケラグエン／ティナクタック／創作ハンバーガー・パスタ／日曜限定ブランチ","price":"$15〜30","area":"Hagåtña","lat":13.476,"lng":-144.75,"maps":"https://www.google.com/maps/search/?api=1&query=Meskla+Chamorro+Fusion+Bistro+Guam","official":"https://mesklaguam.com/","emoji":"🇬🇺","comment":"🇬🇺 現代的なチャモロ料理を食べたいなら注目。ケラグエンは肉や魚介を柑橘・唐辛子などで和えるチャモロ料理、ティナクタックは肉と野菜をココナッツ系の味で煮込む郷土料理。グアムらしさ優先ならかなりおすすめ。","image":"","genre":"チャモロ","genreEmoji":"🇬🇺","family":false,"local":true,"areaShort":"ハガニア"}];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const map=L.map('map',{zoomControl:true}).setView([13.505,144.8],11);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-const markerLayer=L.layerGroup().addTo(map);let current=DATA;
-function markerIcon(i){return L.divIcon({className:'',html:'<div class="pin"><span>'+(i+1)+'</span></div>',iconSize:[28,28],iconAnchor:[7,28],popupAnchor:[0,-28]})}
-function showDetail(i){const d=DATA[i],photos=[d.image,d.image2,d.image3].filter(Boolean),favs=JSON.parse(localStorage.getItem('guamFavs')||'[]'),isFav=favs.includes(i);const gallery=photos.length?'<div class="gallery">'+photos.map((u,n)=>'<div class="slide"><img src="'+u+'" loading="'+(n?'lazy':'eager')+'" onerror="this.parentElement.style.display=\\'none\\'"><span class="cap">'+(n+1)+' / '+photos.length+'</span></div>').join('')+'</div>':'';document.getElementById('detail').innerHTML='<div class="card">'+gallery+'<div class="body"><button class="fav" id="favBtn">'+(isFav?'❤️ 保存済み':'♡ お気に入り')+'</button><div class="badge">'+esc(d.meal||'おすすめ')+'　'+esc(d.genre||'グルメ')+'</div><h2>'+esc(d.name)+'</h2><div class="price">💰 '+esc(d.price||'価格は店舗で確認')+'</div><p>📍 '+esc(d.area||'グアム')+'</p><h3>🍴 おすすめ料理</h3><p>'+esc(d.menu||'おすすめメニュー')+'</p><h3>💡 どんな料理？</h3><p>'+esc(d.comment||'料理の特徴やおすすめポイントを掲載しています。')+'</p><div class="actions">'+(d.official?'<a class="site" href="'+d.official+'" target="_blank" rel="noopener">🌐 公式サイト</a>':'')+'<a class="maps" href="'+d.maps+'" target="_blank" rel="noopener">📍 Google Maps</a></div></div></div>';document.getElementById('favBtn').onclick=()=>{const a=JSON.parse(localStorage.getItem('guamFavs')||'[]'),n=a.includes(i)?a.filter(x=>x!==i):[...a,i];localStorage.setItem('guamFavs',JSON.stringify(n));showDetail(i)};document.getElementById('detail').scrollIntoView({behavior:'smooth',block:'start'})}
-function renderMarkers(){markerLayer.clearLayers();current.forEach(d=>{const i=DATA.indexOf(d);if(!d.lat||!d.lng)return;const mm=L.marker([d.lat,d.lng],{icon:markerIcon(i)}).addTo(markerLayer);mm.bindPopup('<div class="popupTitle">'+esc(d.name)+'</div><div>'+esc(d.menu||'おすすめ料理')+'</div><a href="#" class="popupBtn" onclick="showDetail('+i+');return false;">この店の詳細を見る</a>')})}
-function renderList(){const list=document.getElementById('list');list.innerHTML='';document.getElementById('count').textContent=current.length+'店舗';current.forEach(d=>{const i=DATA.indexOf(d),b=document.createElement('button');b.className='item';const photo=d.image?'<img class="thumb" src="'+d.image+'" loading="lazy">':'<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:25px">🍴</div>';b.innerHTML='<div class="itemTop">'+photo+'<div><b>'+esc(d.name)+'</b><small>'+esc(d.area||'グアム')+'　•　'+esc(d.price||'')+'</small></div></div><div class="tags"><span class="tag">'+esc(d.genre||'グルメ')+'</span>'+(d.family?'<span class="tag">👨‍👩‍👧‍👦 子連れ◎</span>':'')+'</div><small>'+esc(d.menu||'おすすめ料理')+'</small>';b.onclick=()=>{map.setView([d.lat,d.lng],16,{animate:true});showDetail(i)};list.appendChild(b)})}
-function applyFilters(){const meal=document.querySelector('[data-meal].active')?.dataset.meal||'all',q=document.querySelector('.qf.active')?.dataset.q||'all',favs=JSON.parse(localStorage.getItem('guamFavs')||'[]');current=DATA.filter((d,i)=>(meal==='all'||d.meal===meal)&&(q==='all'||(q==='family'&&d.family)||(q==='local'&&d.local)||(q==='photo'&&d.image)||(q==='fav'&&favs.includes(i))));const labels={all:'すべての店舗',朝食:'朝食のお店',ランチ:'ランチのお店',ディナー:'ディナーのお店'};document.getElementById('activeNote').textContent='📍 '+labels[meal]+'（'+current.length+'店舗）';renderMarkers();renderList()}
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.tab).classList.add('active');setTimeout(()=>map.invalidateSize(),50)});
-document.querySelectorAll('[data-meal]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-meal]').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters()});
-document.querySelectorAll('.qf').forEach(b=>b.onclick=()=>{document.querySelectorAll('.qf').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters()});
-applyFilters();
-</script></body></html>
+const mapEl=document.getElementById('map');
+const mapShell=document.createElement('div');
+mapShell.className='guamMapShell';
+mapEl.replaceWith(mapShell);
+let zoomLevel=1;
+const MINLAT=13.235, MAXLAT=13.655, MINLON=-144.965, MAXLON=-144.615;
+function xy(lat,lon){
+  const x=((lon-MINLON)/(MAXLON-MINLON))*1000;
+  const y=((MAXLAT-lat)/(MAXLAT-MINLAT))*1500;
+  return [x,y];
+}
+function esc2(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function esc(s){return esc2(s)}
+function renderGuamMap(filteredData=DATA){
+  const shell=mapShell;
+  shell.innerHTML='';
+  const mapShellEl=shell;
+  const pinItems=filteredData.map(d=>{const i=DATA.indexOf(d);const [x,y]=xy(d.lat,d.lng);return {d,i,x:x/10,y:y/15}});
+  const pinHtml=pinItems.map(p=>{
+    return `<button class="gpinBtn" data-i="${p.i}" style="left:${p.x}%;top:${p.y}%;" aria-label="${esc2(p.d.name)}">${p.i+1}</button>`;
+  }).join('');
+
+  mapShellEl.innerHTML=`
+  <div class="mapToolbar"><button id="zminus" aria-label="縮小">−</button><span>GUAM MAP</span><button id="zplus" aria-label="拡大">＋</button></div>
+  <div class="mapMode"><button id="overview" class="active">🌴 全体</button><button id="tumon">🏝️ タモン</button><button id="hagatna">🏙️ ハガニア</button></div>
+  <div class="mapViewport" id="mapViewport">
+    <div class="mapStage" id="mapStage">
+      <svg id="guamSvg" viewBox="0 0 1000 1500" aria-label="Guam restaurant map">
+        <defs>
+          <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity=".25"/></filter>
+          <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aee2ee"/><stop offset="1" stop-color="#d7f1f4"/></linearGradient>
+        </defs>
+        <rect width="1000" height="1500" fill="url(#sea)"/>
+        <path class="island" filter="url(#shadow)" d="M450 45 C380 80 330 150 335 230 C300 300 330 380 300 455 C260 535 275 620 245 705 C210 800 250 890 225 980 C200 1080 230 1190 280 1280 C315 1340 390 1395 465 1410 C535 1425 590 1380 625 1325 C660 1270 690 1205 670 1120 C650 1030 710 945 685 860 C665 790 700 710 665 635 C640 575 675 500 650 425 C630 355 665 275 625 205 C600 155 545 85 500 50 Z"/>
+        <path class="road" d="M485 105 C450 280 490 440 455 620 C420 800 480 970 430 1150 C400 1240 420 1320 465 1385"/>
+        <path class="road secondary" d="M365 520 C450 550 555 530 625 575 M300 860 C400 845 535 850 680 905 M275 1050 C380 1025 505 1040 660 1100"/>
+        <g class="placeLabels"><text x="475" y="155">DEDEDO</text><text x="500" y="345">YIGO</text><text x="355" y="565">TUMON</text><text x="405" y="650">TAMUNING</text><text x="470" y="800">HAGÅTÑA</text><text x="360" y="975">APOTGAN</text><text x="470" y="1180">SOUTH GUAM</text></g>
+        <g class="areaHint"><rect x="270" y="430" width="365" height="300" rx="28"/><text x="452" y="470" text-anchor="middle">🌴 タモン周辺</text><rect x="345" y="720" width="300" height="270" rx="28"/><text x="495" y="760" text-anchor="middle">🏙️ ハガニア方面</text></g>
+      </svg>
+      <div class="pinLayer">${pinHtml}</div>
+    </div>
+    <div class="pinHint">📍 1つのピン＝1店舗　・　拡大後は1本指で移動　・　2本指で拡大/縮小</div>
+  </div>
+  <div class="mapLegend"><span>📍 1店舗</span><span>📍 店舗</span><span>※位置はエリア確認用</span></div>`;
+
+  const stage=document.getElementById('mapStage');
+  const viewport=document.getElementById('mapViewport');
+  let zoom=1, panX=0, panY=0;
+  let startDist=0, startZoom=1, startPanX=0, startPanY=0;
+  let startX=0, startY=0, moved=false;
+
+  function applyTransform(){
+    stage.style.transform=`translate3d(${panX}px,${panY}px,0) scale(${zoom})`;
+  }
+
+  function clampPan(){
+    const w=viewport.clientWidth, h=viewport.clientHeight;
+    const maxX=Math.max(0,(w*(zoom-1))/2 + 90);
+    const maxY=Math.max(0,(h*(zoom-1))/2 + 90);
+    panX=Math.max(-maxX,Math.min(maxX,panX));
+    panY=Math.max(-maxY,Math.min(maxY,panY));
+  }
+
+  function setZoom(next, centerX=w=>viewport.clientWidth/2, centerY=h=>viewport.clientHeight/2){
+    const old=zoom;
+    zoom=Math.max(1,Math.min(2.8,next));
+    if(zoom===1){panX=0;panY=0;}
+    else if(old!==zoom){
+      const cx=centerX-viewport.clientWidth/2;
+      const cy=centerY-viewport.clientHeight/2;
+      const ratio=zoom/old;
+      panX=cx-(cx-panX)*ratio;
+      panY=cy-(cy-panY)*ratio;
+    }
+    clampPan();
+    applyTransform();
+  }
+
+  document.getElementById('zplus').onclick=()=>setZoom(zoom+.25);
+  document.getElementById('zminus').onclick=()=>setZoom(zoom-.25);
+
+  function dist(e){
+    return Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY
+    );
+  }
+  function mid(e){
+    return {
+      x:(e.touches[0].clientX+e.touches[1].clientX)/2,
+      y:(e.touches[0].clientY+e.touches[1].clientY)/2
+    };
+  }
+
+  viewport.addEventListener('touchstart',e=>{
+    if(e.touches.length===1){
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+      startPanX=panX;
+      startPanY=panY;
+      moved=false;
+    }else if(e.touches.length===2){
+      e.preventDefault();
+      startDist=dist(e);
+      startZoom=zoom;
+      startPanX=panX;
+      startPanY=panY;
+      moved=true;
+    }
+  },{passive:false});
+
+  viewport.addEventListener('touchmove',e=>{
+    if(e.touches.length===1 && zoom>1){
+      e.preventDefault();
+      const dx=e.touches[0].clientX-startX;
+      const dy=e.touches[0].clientY-startY;
+      if(Math.abs(dx)+Math.abs(dy)>5) moved=true;
+      panX=startPanX+dx;
+      panY=startPanY+dy;
+      clampPan();
+      applyTransform();
+    }else if(e.touches.length===2 && startDist){
+      e.preventDefault();
+      const m=mid(e);
+      const d=dist(e);
+      const next=startZoom*(d/startDist);
+      const old=zoom;
+      zoom=Math.max(1,Math.min(2.8,next));
+
+      const cx=m.x-viewport.clientWidth/2;
+      const cy=m.y-viewport.clientHeight/2;
+      const ratio=zoom/old;
+      panX=cx-(cx-startPanX)*ratio;
+      panY=cy-(cy-startPanY)*ratio;
+      clampPan();
+      applyTransform();
+    }
+  },{passive:false});
+
+  viewport.addEventListener('touchend',e=>{
+    if(e.touches.length===0){
+      startDist=0;
+    }
+  },{passive:false});
+
+  viewport.addEventListener('touchcancel',()=>{startDist=0;},{passive:false});
+
+  // When an area shortcut is selected, zoom and center that area.
+  const setMode=(mode)=>{
+    document.querySelectorAll('.mapMode button').forEach(b=>b.classList.remove('active'));
+    document.getElementById(mode).classList.add('active');
+    if(mode==='overview'){
+      zoom=1;panX=0;panY=0;
+    }
+    if(mode==='tumon'){
+      zoom=2.05;panX=0;panY=-65;
+    }
+    if(mode==='hagatna'){
+      zoom=1.85;panX=0;panY=70;
+    }
+    clampPan();
+    applyTransform();
+  };
+  document.getElementById('overview').onclick=()=>setMode('overview');
+  document.getElementById('tumon').onclick=()=>setMode('tumon');
+  document.getElementById('hagatna').onclick=()=>setMode('hagatna');
+
+  document.querySelectorAll('.gpinBtn').forEach(p=>p.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    document.querySelectorAll('.gpinBtn').forEach(x=>x.classList.remove('selected'));
+    p.classList.add('selected');
+    show(Number(p.dataset.i),true);
+  }));
+
+}
+renderGuamMap();
+
+function show(i,pan=true){
+ const d=DATA[i]; if(!d)return;
+ const photos=[d.image,d.image2,d.image3].filter(Boolean);
+ const photo=photos.length
+  ? '<div class="photoGallery">'+photos.map((u,n)=>'<div class="photoSlide"><img class="foodphoto" src="'+u+'" alt="'+esc(d.name)+' おすすめ料理 '+(n+1)+'" loading="'+(n===0?'eager':'lazy')+'" onerror="this.style.display=&quot;none&quot;"><div class="photoCaption">料理写真 '+(n+1)+' / '+photos.length+'</div></div>').join('')+'</div>'
+  : '<div class="hero">'+d.emoji+'</div>';
+ const favs=JSON.parse(localStorage.getItem('guamFavs')||'[]');
+ const isFav=favs.includes(i);
+ card.innerHTML='<div class="selectedBar"><span>📍 選択中の店舗</span><button class="favBtn" data-fav="'+i+'">'+(isFav?'❤️ 保存済み':'♡ お気に入り')+'</button></div>'+photo+'<div class="body"><span class="pill">'+esc(d.meal)+'</span><div class="name">'+esc(d.name)+'</div><div class="menu"><b>🍴 おすすめ：</b>'+esc(d.menu)+'</div><div class="price">💰 '+esc(d.price)+'</div><div class="area">📍 '+esc(d.area)+'</div><div class="comment"><b>💡 どんな料理？</b><br>'+esc(d.comment)+'</div><div class="actions">'+(d.official?'<a class="site" href="'+d.official+'" target="_blank" rel="noopener">🌐 公式サイト</a>':'')+'<a class="maps" href="'+d.maps+'" target="_blank" rel="noopener">📍 Google Maps</a></div></div>';
+ document.querySelector('.favBtn')?.addEventListener('click',e=>{
+  const id=Number(e.currentTarget.dataset.fav); const arr=JSON.parse(localStorage.getItem('guamFavs')||'[]');
+  const next=arr.includes(id)?arr.filter(x=>x!==id):[...arr,id]; localStorage.setItem('guamFavs',JSON.stringify(next));
+  e.currentTarget.textContent=next.includes(id)?'❤️ 保存済み':'♡ お気に入り';
+ });
+ if(pan)document.getElementById('card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function getFilteredData(){
+ const f=document.querySelector('.filters button.active')?.dataset.filter||'all';
+ const q=search.value.trim().toLowerCase();
+ const qf=document.querySelector('.qf.active')?.dataset.q||'all';
+ const favs=JSON.parse(localStorage.getItem('guamFavs')||'[]');
+ return DATA.filter((d,i)=>{
+  const mealOk=f==='all'||d.meal===f;
+  const text=(d.name+' '+d.menu+' '+d.area+' '+d.genre+' '+d.comment).toLowerCase();
+  const searchOk=!q||text.includes(q);
+  const qOk=qf==='all'||(qf==='family'&&d.family)||(qf==='local'&&d.local)||(qf==='photo'&&!!d.image)||(qf==='favorites'&&favs.includes(i));
+  return mealOk&&searchOk&&qOk;
+ });
+}
+function render(){
+ const filtered=getFilteredData(); list.innerHTML='';
+ filtered.forEach(d=>{
+  const i=DATA.indexOf(d); const b=document.createElement('button'); b.className='item';
+  const photo=d.image?'<img src="'+d.image+'" loading="lazy" onerror="this.remove()">':'<span class="thumbEmoji">'+d.genreEmoji+'</span>';
+  b.innerHTML='<div class="itemTop">'+photo+'<div><b>'+d.genreEmoji+' '+esc(d.name)+'</b><span>'+esc(d.areaShort)+'　•　'+esc(d.price)+'</span></div></div><div class="itemTags"><em>'+esc(d.genre)+'</em>'+(d.family?'<em>👨‍👩‍👧‍👦 子連れ◎</em>':'')+(d.local?'<em>🇬🇺 ローカル</em>':'')+'</div><div class="itemMenu">'+esc(d.menu)+'</div>';
+  b.onclick=()=>{show(i,true);document.querySelectorAll('.gpinBtn').forEach(x=>x.classList.remove('selected'));document.querySelector('.gpinBtn[data-i="'+i+'"]')?.classList.add('selected');};
+  list.appendChild(b);
+ });
+ const c=document.getElementById('resultCount');if(c)c.textContent=filtered.length+'店舗';
+ renderGuamMap(filtered);
+ const meal=document.querySelector('.filters button.active')?.dataset.filter||'all';
+ const qf=document.querySelector('.qf.active')?.dataset.q||'all';
+ const labels={all:'すべての店舗',朝食:'朝食のお店',ランチ:'ランチのお店',ディナー:'ディナーのお店'};
+ let label=labels[meal]||meal;
+ if(qf==='family')label+=' ＋ 子連れ向き';
+ if(qf==='local')label+=' ＋ グアム料理';
+ if(qf==='photo')label+=' ＋ 写真あり';
+ if(qf==='favorites')label+=' ＋ お気に入り';
+ const note=document.getElementById('activeFilterNote');if(note)note.textContent='📍 MAP：'+label+'（'+filtered.length+'店舗）';
+}
+document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filters button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();});
+document.querySelectorAll('.qf').forEach(b=>b.onclick=()=>{document.querySelectorAll('.qf').forEach(x=>x.classList.remove('active'));b.classList.add('active');render();});
+search.addEventListener('input',render);
+render(); show(0,false);
+</script>
+<div class="note">📸 写真はWeb上で確認できた料理・店舗掲載写真を表示しています。画像が読み込めない場合は料理アイコンに切り替わります。公開用途では各画像の利用条件をご確認ください。</div><noscript><div style="margin:16px;padding:16px;border-radius:14px;background:#fff4dc;color:#604d2c;font-weight:800">JavaScriptを有効にするとMAPと店舗情報が表示されます。</div></noscript></body></html>

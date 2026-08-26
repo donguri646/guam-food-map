@@ -1,6 +1,7 @@
 {
   "name": "Guam Family Travel MAP",
   "short_name": "Guam Travel MAP",
+  "description": "iPhoneで見る、グアム旅行専用グルメ＆遊びMAP",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
