@@ -1,10 +1,19 @@
-GUAM FAMILY TRAVEL MAP — pinch drift fix
+# Guam Family Travel MAP
 
-- Pinch midpoint movement is separated from the original geographic anchor.
-- The same map world contains both tiles and store pins.
-- On pinch end, the visual scale is snapped to the committed integer zoom before recomputing center, preventing directional drift.
-- New tile sets are layered over the old set so the map is not intentionally blanked during loading.
-- Touch-action is disabled on the map so iPhone gestures remain inside the map.
+iPhone向けのグアム旅行専用MAP。
 
+タブ:
+- 🍴 グルメ
+- 🏝️ 遊ぶ
+- 🛍️ お土産
 
-【MAP表示修正】おすすめフィルター追加時に誤って未定義のrenderMarkers()を呼んでJavaScriptが停止していたため、renderMap()へ修正。LeafletはjsDelivr→cdnjsのフォールバックを追加し、初期化の二重実行も防止。
+今回の構成では「朝市」「候補プラン」タブは削除。
+グルメ・遊び・お土産の各スポットをMAP上のピンで確認できます。
+
+iPhoneでWebアプリとして使う場合:
+1. GitHub Pages等へこのフォルダ内の全ファイルをアップロード
+2. Safariで公開URLを開く
+3. 共有 → ホーム画面に追加
+
+注意:
+Leafletの地図タイルはOpenStreetMapの公開タイルを利用します。
