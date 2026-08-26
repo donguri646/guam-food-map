@@ -100,7 +100,7 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
     <p>「何を買えばいいか分からない」でも大丈夫。グアムらしい食品・雑貨・服・ローカルクラフトを実際に見比べられる場所を厳選。</p>
   </div>
   <div class="mapWrap" id="shoppingMapWrap">
-    <div id="shoppingMap" style="height:100%;width:100%"></div>
+    <div id="shoppingMap" style="height:360px;width:100%;min-height:360px"></div>
   </div>
   <div class="listHead"><b>🛍️ おすすめお土産スポット</b><span id="shoppingCount"></span></div>
   <div id="shoppingList"></div>
@@ -250,4 +250,40 @@ document.querySelectorAll(".eventCard").forEach(b=>b.onclick=()=>{
 });
 applyFilters();
 window.addEventListener("resize",()=>{if(map)map.invalidateSize({pan:false,animate:false});if(playMap)playMap.invalidateSize({pan:false,animate:false});if(window.shoppingMap)shoppingMap.invalidateSize({pan:false,animate:false});});
-</script></body></html>
+</script>
+<script>
+(function(){
+  function showSection(tab){
+    document.querySelectorAll(".section").forEach(function(s){
+      s.style.display = (s.id===tab) ? "block" : "none";
+    });
+    document.querySelectorAll("[data-tab]").forEach(function(b){
+      b.classList.toggle("active", b.dataset.tab===tab);
+    });
+    if(tab==="shopping" && typeof initShoppingMap==="function"){
+      setTimeout(function(){
+        initShoppingMap();
+        if(window.shoppingMap) window.shoppingMap.invalidateSize(true);
+      },120);
+    }
+    if(tab==="play" && typeof initPlayMap==="function"){
+      setTimeout(function(){
+        initPlayMap();
+        if(window.playMap) window.playMap.invalidateSize(true);
+      },120);
+    }
+  }
+  window.addEventListener("load",function(){
+    var tabs=document.querySelectorAll("[data-tab]");
+    tabs.forEach(function(b){
+      b.addEventListener("click",function(e){
+        e.preventDefault();
+        showSection(b.dataset.tab);
+      });
+    });
+    var initial=document.querySelector("[data-tab].active")?.dataset.tab || "food";
+    showSection(initial);
+  });
+})();
+</script>
+</body></html>
