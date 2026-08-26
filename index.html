@@ -36,12 +36,14 @@ let map=null;
 let markerLayer=null;
 let current=DATA;
 
-function initMap(){
+window.initMap=window.initMap=function initMap(){
+  if(window.__mapInitialized) return;
   if(typeof L==="undefined"){
     document.getElementById("map").innerHTML =
       '<div style="padding:28px;text-align:center;font-weight:900;color:#52706d">地図を読み込めませんでした。ページを再読み込みしてください。</div>';
     return;
   }
+  window.__mapInitialized=true;
   map=L.map("map",{zoomControl:true,scrollWheelZoom:true,touchZoom:true,dragging:true}).setView([13.505,144.8],11);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
     maxZoom:19,

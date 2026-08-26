@@ -13,3 +13,6 @@ Guam Family Travel MAP — リアル詳細MAP版
 
 
 重要: 詳細MAP版のJavaScript構文エラーを修正し、Leaflet地図が初期化されることを確認した修正版です。
+
+
+【今回の修正】LeafletのCDNをunpkgからjsDelivrへ変更。読み込みに失敗した場合はcdnjsへ自動フォールバックします。
