@@ -16,3 +16,6 @@ Guam Family Travel MAP — リアル詳細MAP版
 
 
 【最終方式変更】Leafletを完全削除。外部JavaScriptライブラリに依存せず、OpenStreetMapのEmbed iframeを使用。店舗一覧タップで選択店舗の位置へ地図を切り替えます。
+
+
+【重要修正】店舗の経度データが西経(-144.xxx)になっていたため、グアムの東経(144.xxx)へ正規化。これにより全28店舗のピンを詳細MAP上に表示。Leaflet等の外部JSは使用せず、OSM Embed + ピンオーバーレイ方式。
