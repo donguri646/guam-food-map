@@ -68,13 +68,13 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let current=DATA;
 
 
+
 const mapEl=document.getElementById("tileMap");
 const pinEl=document.getElementById("pinLayer");
 let zoom=11, center={lat:13.505,lng:144.800};
-let targetZoom=11,targetCenter={lat:13.505,lng:144.800};
 let dragging=false,last={x:0,y:0},pointers=new Map();
-let pinchStartDist=0,pinchStartZoom=11,pinchAnchor=null;
-let worldOrigin={x:0,y:0}, tileKey="";
+let pinchStartDist=0,pinchBaseZoom=11,pinchBaseCenter={...center},pinchMid={x:0,y:0};
+let tileKey="", gestureScale=1;
 
 function clampLat(lat){return Math.max(-85.05112878,Math.min(85.05112878,lat));}
 function worldSize(z){return 256*Math.pow(2,z);}
@@ -83,70 +83,74 @@ function project(lat,lng,z=zoom){
   return {x:(lng+180)/360*n,y:(1-Math.asinh(Math.tan(la))/Math.PI)/2*n};
 }
 function unproject(x,y,z=zoom){
-  const n=worldSize(z),lng=x/n*360-180;
-  const yy=Math.PI*(1-2*y/n);
+  const n=worldSize(z),lng=x/n*360-180, yy=Math.PI*(1-2*y/n);
   return {lng,lat:180/Math.PI*Math.atan(Math.sinh(yy))};
 }
 function tileUrl(x,y,z){
-  const n=2**z;x=((x%n)+n)%n;
+  const n=2**z; x=((x%n)+n)%n;
   return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 }
-function ensureTileLayer(){
-  let layer=document.getElementById("tileLayer");
-  if(!layer){
-    layer=document.createElement("div");
-    layer.id="tileLayer";
-    layer.style.cssText="position:absolute;inset:0;will-change:transform;pointer-events:none;-webkit-transform:translateZ(0);transform:translateZ(0);";
-    mapEl.appendChild(layer);
+function ensureLayer(){
+  let l=document.getElementById("tileLayer");
+  if(!l){
+    l=document.createElement("div");l.id="tileLayer";
+    l.style.cssText="position:absolute;inset:0;will-change:transform;pointer-events:none;transform-origin:0 0;";
+    mapEl.appendChild(l);
   }
-  return layer;
+  return l;
 }
 function rebuildTiles(){
-  const layer=ensureTileLayer(), z=zoom, c=project(center.lat,center.lng,z);
-  const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256);
-  const key=z+":"+tx+":"+ty;
+  const l=ensureLayer(),c=project(center.lat,center.lng,zoom);
+  const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256),key=zoom+":"+tx+":"+ty;
   if(key===tileKey)return;
-  tileKey=key;
-  layer.innerHTML="";
+  const next=document.createElement("div");
+  next.style.cssText="position:absolute;inset:0;will-change:transform;pointer-events:none;";
+  next.dataset.key=key;
   for(let yy=ty-3;yy<=ty+3;yy++){
     for(let xx=tx-3;xx<=tx+3;xx++){
-      const img=new Image();
-      img.draggable=false;img.className="tile";
-      img.src=tileUrl(xx,yy,z);
-      img.style.left=(xx*256)+"px";
-      img.style.top=(yy*256)+"px";
-      layer.appendChild(img);
+      const img=new Image();img.draggable=false;img.className="tile";
+      img.src=tileUrl(xx,yy,zoom);
+      img.style.left=(xx*256)+"px";img.style.top=(yy*256)+"px";
+      next.appendChild(img);
     }
   }
+  // Keep old tiles visible until at least one new tile is loaded.
+  let swapped=false;
+  const swap=()=>{
+    if(swapped)return;swapped=true;
+    next.style.opacity="1";
+    const old=[...l.children];
+    l.appendChild(next);
+    old.forEach(x=>{if(x!==next)x.remove();});
+    tileKey=key;
+  };
+  const first=next.querySelector("img");
+  if(first){
+    first.onload=swap;
+    first.onerror=swap;
+  }else swap();
+  // Never leave the map blank if the network is slow.
+  setTimeout(swap,1200);
 }
 function updateTransform(){
   const w=mapEl.clientWidth,h=mapEl.clientHeight;
   if(!w||!h)return;
   const c=project(center.lat,center.lng,zoom);
-  const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256);
   const ox=w/2-c.x,oy=h/2-c.y;
-  const layer=ensureTileLayer();
-  layer.style.transform=`translate3d(${ox}px,${oy}px,0)`;
-  pinEl.style.transform="translate3d(0,0,0)";
-  worldOrigin={x:c.x,y:c.y,ox,oy,tx,ty};
+  const l=ensureLayer();
+  l.style.transform=`translate3d(${ox}px,${oy}px,0)`;
   renderPins();
 }
-function renderMap(){
-  rebuildTiles();
-  updateTransform();
-}
+function renderMap(){rebuildTiles();updateTransform();}
 function renderPins(){
-  if(!pinEl)return;
-  const w=mapEl.clientWidth,h=mapEl.clientHeight;
-  const c=project(center.lat,center.lng,zoom);
+  const w=mapEl.clientWidth,h=mapEl.clientHeight,c=project(center.lat,center.lng,zoom);
   pinEl.innerHTML="";
   current.forEach(d=>{
     if(d.lat==null||d.lng==null)return;
     const p=project(Number(d.lat),Number(d.lng),zoom);
     const x=p.x-c.x+w/2,y=p.y-c.y+h/2;
     if(x<-50||x>w+50||y<-70||y>h+30)return;
-    const i=DATA.indexOf(d);
-    const b=document.createElement("button");
+    const i=DATA.indexOf(d),b=document.createElement("button");
     b.className="mapPin";b.type="button";b.title=d.name;
     b.style.left=x+"px";b.style.top=y+"px";
     b.innerHTML="<span>"+(i+1)+"</span>";
@@ -154,88 +158,87 @@ function renderPins(){
     pinEl.appendChild(b);
   });
 }
-function setCenter(lat,lng){center={lat:clampLat(Number(lat)),lng:Number(lng)};tileKey="";renderMap();}
 function zoomAt(newZoom,px,py){
-  newZoom=Math.max(9,Math.min(17,Number(newZoom)));
-  if(Math.abs(newZoom-zoom)<0.001)return;
-  const old=project(center.lat,center.lng,zoom);
-  const worldX=old.x+(px-mapEl.clientWidth/2),worldY=old.y+(py-mapEl.clientHeight/2);
-  const anchor=unproject(worldX,worldY,zoom);
-  zoom=newZoom;
-  const a=project(anchor.lat,anchor.lng,zoom);
-  const nc=unproject(a.x-(px-mapEl.clientWidth/2),a.y-(py-mapEl.clientHeight/2),zoom);
-  center={lat:nc.lat,lng:nc.lng};
-  tileKey="";
-  renderMap();
-}
-function zoomByPinch(newZoom,mid){
-  const nz=Math.max(9,Math.min(17,newZoom));
-  const oldZoom=zoom;
-  if(Math.abs(nz-oldZoom)<0.001)return;
-  const oldCenter=project(center.lat,center.lng,oldZoom);
-  const wx=oldCenter.x+(mid.x-mapEl.clientWidth/2);
-  const wy=oldCenter.y+(mid.y-mapEl.clientHeight/2);
-  const anchor=unproject(wx,wy,oldZoom);
+  const nz=Math.max(9,Math.min(17,Math.round(newZoom)));
+  if(nz===zoom)return;
+  const c=project(center.lat,center.lng,zoom);
+  const anchor=unproject(c.x+(px-mapEl.clientWidth/2),c.y+(py-mapEl.clientHeight/2),zoom);
   zoom=nz;
   const a=project(anchor.lat,anchor.lng,zoom);
-  const nc=unproject(a.x-(mid.x-mapEl.clientWidth/2),a.y-(mid.y-mapEl.clientHeight/2),zoom);
-  center={lat:nc.lat,lng:nc.lng};
-  tileKey="";
-  renderMap();
+  center=unproject(a.x-(px-mapEl.clientWidth/2),a.y-(py-mapEl.clientHeight/2),zoom);
+  tileKey="";renderMap();
+}
+function applyPinchScale(scale,mid){
+  // Render only integer zoom levels. Fractional pinch is represented by a CSS scale,
+  // so tile URLs are always valid and the map never blanks.
+  const raw=Math.max(9,Math.min(17,pinchBaseZoom+Math.log2(scale)));
+  const integer=Math.max(9,Math.min(17,Math.round(raw)));
+  const frac=Math.pow(2,raw-integer);
+  zoom=integer;
+  gestureScale=frac;
+  const l=ensureLayer();
+  const c=project(center.lat,center.lng,zoom);
+  const ox=mapEl.clientWidth/2-c.x,oy=mapEl.clientHeight/2-c.y;
+  l.style.transform=`translate3d(${ox}px,${oy}px,0) scale(${frac})`;
+  l.style.transformOrigin=`${mid.x}px ${mid.y}px`;
+  // Pins follow the same temporary scale.
+  pinEl.style.transform=`translate3d(${(1-frac)*mid.x}px,${(1-frac)*mid.y}px,0) scale(${frac})`;
+  if(integer!==pinchBaseZoom){tileKey="";rebuildTiles();}
+}
+function finishPinch(){
+  if(!gestureScale)return;
+  const l=ensureLayer();
+  const scale=gestureScale,mid=pinchMid;
+  // Convert the visual scale into a stable integer zoom centered at the pinch midpoint.
+  const c=project(center.lat,center.lng,zoom);
+  const wx=c.x+(mid.x-mapEl.clientWidth/2)/scale;
+  const wy=c.y+(mid.y-mapEl.clientHeight/2)/scale;
+  const anchor=unproject(wx,wy,zoom);
+  const nz=Math.max(9,Math.min(17,Math.round(zoom+Math.log2(scale))));
+  const a=project(anchor.lat,anchor.lng,nz);
+  center=unproject(a.x-(mid.x-mapEl.clientWidth/2),a.y-(mid.y-mapEl.clientHeight/2),nz);
+  zoom=nz;gestureScale=1;pinEl.style.transform="none";l.style.transformOrigin="0 0";tileKey="";renderMap();
 }
 
-function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
-function midpoint(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
-
-mapEl.addEventListener("wheel",e=>{
-  e.preventDefault();zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY);
-},{passive:false});
-
+mapEl.addEventListener("wheel",e=>{e.preventDefault();zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY)},{passive:false});
 mapEl.addEventListener("pointerdown",e=>{
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   try{mapEl.setPointerCapture(e.pointerId)}catch(_){}
-  if(pointers.size===1){
-    dragging=true;last={x:e.clientX,y:e.clientY};mapEl.classList.add("dragging");
-  }else if(pointers.size===2){
+  if(pointers.size===1){dragging=true;last={x:e.clientX,y:e.clientY};mapEl.classList.add("dragging");}
+  else if(pointers.size===2){
     const pts=[...pointers.values()];
-    pinchStartDist=distance(pts[0],pts[1]);pinchStartZoom=zoom;
-    pinchAnchor=midpoint(pts[0],pts[1]);dragging=false;
+    pinchStartDist=Math.max(1,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
+    pinchBaseZoom=zoom;pinchBaseCenter={...center};pinchMid={x:(pts[0].x+pts[1].x)/2-mapEl.getBoundingClientRect().left,y:(pts[0].y+pts[1].y)/2-mapEl.getBoundingClientRect().top};
+    dragging=false;
   }
 });
 mapEl.addEventListener("pointermove",e=>{
   if(!pointers.has(e.pointerId))return;
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pointers.size>=2){
-    const pts=[...pointers.values()],d=distance(pts[0],pts[1]);
-    if(pinchStartDist>0){
-      const mid=midpoint(pts[0],pts[1]);
-      const nz=pinchStartZoom+Math.log2(Math.max(.05,d/pinchStartDist));
-      zoomByPinch(nz,{x:mid.x-mapEl.getBoundingClientRect().left,y:mid.y-mapEl.getBoundingClientRect().top});
-    }
+    const pts=[...pointers.values()],d=Math.max(1,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
+    pinchMid={x:(pts[0].x+pts[1].x)/2-mapEl.getBoundingClientRect().left,y:(pts[0].y+pts[1].y)/2-mapEl.getBoundingClientRect().top};
+    applyPinchScale(d/pinchStartDist,pinchMid);
     return;
   }
   if(!dragging)return;
   const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};
-  const c=project(center.lat,center.lng,zoom);
-  const n=unproject(c.x-dx,c.y-dy,zoom);
-  center={lat:n.lat,lng:n.lng};
-  // Smooth: only translate the existing layers; do not rebuild tiles while dragging.
-  updateTransform();
+  const c=project(center.lat,center.lng,zoom),n=unproject(c.x-dx,c.y-dy,zoom);
+  center={lat:n.lat,lng:n.lng};updateTransform();
 });
 function endPointer(e){
   pointers.delete(e.pointerId);
-  if(pointers.size<2)pinchStartDist=0;
-  if(pointers.size===1){
+  if(pointers.size===0){
+    if(gestureScale!==1)finishPinch();
+    dragging=false;mapEl.classList.remove("dragging");
+  }else if(pointers.size===1){
     const p=[...pointers.values()][0];dragging=true;last={x:p.x,y:p.y};
-  }else dragging=false;
-  if(!pointers.size)mapEl.classList.remove("dragging");
+  }
   try{mapEl.releasePointerCapture(e.pointerId)}catch(_){}
-  if(!pointers.size){setTimeout(()=>{tileKey="";rebuildTiles();updateTransform();},0);}
 }
 mapEl.addEventListener("pointerup",endPointer);
 mapEl.addEventListener("pointercancel",endPointer);
 mapEl.addEventListener("dblclick",e=>{e.preventDefault();zoomAt(zoom+1,e.offsetX,e.offsetY);});
-
 document.getElementById("mapPlus").onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
 document.getElementById("mapMinus").onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
 document.getElementById("mapReset").onclick=()=>{zoom=11;center={lat:13.505,lng:144.800};tileKey="";renderMap();};
