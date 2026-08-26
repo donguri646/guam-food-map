@@ -17,9 +17,9 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
 </style>
 <style>
 .mapWrap{position:relative;height:520px;overflow:hidden;background:#c9e8ee;touch-action:none}
-.tileMap{position:absolute;inset:0;overflow:hidden;background:#c9e8ee;touch-action:none;cursor:grab}
+.tileMap{position:absolute;inset:0;overflow:hidden;background:#c9e8ee;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tileMap.dragging{cursor:grabbing}
-.tile{position:absolute;width:256px;height:256px;user-select:none;pointer-events:none}
+.tile{position:absolute;width:256px;height:256px;user-select:none;-webkit-user-drag:none;pointer-events:none}
 .pinLayer{position:absolute;inset:0;pointer-events:none}
 .mapPin{position:absolute;transform:translate(-50%,-100%);width:28px;height:34px;border:2px solid #fff;border-radius:50% 50% 50% 0;background:#078d86;color:#fff;box-shadow:0 2px 6px #0006;pointer-events:auto;padding:0;z-index:20;cursor:pointer}
 .mapPin span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:9px;font-weight:900;transform:rotate(45deg)}
@@ -70,7 +70,7 @@ let current=DATA;
 const mapEl=document.getElementById("tileMap");
 const pinEl=document.getElementById("pinLayer");
 let zoom=11, center={lat:13.505,lng:144.800};
-let dragging=false,last={x:0,y:0};
+let dragging=false,last={x:0,y:0},pointers=new Map(),pinchStartDist=0,pinchStartZoom=11,pinchStartCenter=null,lastTap=0;
 
 function clampLat(lat){return Math.max(-85.05112878,Math.min(85.05112878,lat));}
 function worldSize(z){return 256*Math.pow(2,z);}
@@ -190,17 +190,81 @@ document.querySelectorAll(".qf").forEach(b=>b.onclick=()=>{document.querySelecto
 document.getElementById("mapPlus").onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
 document.getElementById("mapMinus").onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
 document.getElementById("mapReset").onclick=()=>{zoom=11;center={lat:13.505,lng:144.800};renderMap();};
-mapEl.addEventListener("wheel",e=>{e.preventDefault();zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY)},{passive:false});
-mapEl.addEventListener("pointerdown",e=>{dragging=true;last={x:e.clientX,y:e.clientY};mapEl.setPointerCapture(e.pointerId);mapEl.classList.add("dragging")});
+
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function midpoint(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+
+mapEl.addEventListener("wheel",e=>{
+  e.preventDefault();
+  zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY);
+},{passive:false});
+
+mapEl.addEventListener("pointerdown",e=>{
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  try{mapEl.setPointerCapture(e.pointerId)}catch(_){}
+  if(pointers.size===1){
+    dragging=true;
+    last={x:e.clientX,y:e.clientY};
+    mapEl.classList.add("dragging");
+  }else if(pointers.size===2){
+    const pts=[...pointers.values()];
+    pinchStartDist=distance(pts[0],pts[1]);
+    pinchStartZoom=zoom;
+    pinchStartCenter={...center};
+    dragging=false;
+  }
+});
+
 mapEl.addEventListener("pointermove",e=>{
+  if(!pointers.has(e.pointerId))return;
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(pointers.size>=2){
+    const pts=[...pointers.values()];
+    const d=distance(pts[0],pts[1]);
+    if(pinchStartDist>0){
+      const delta=Math.log2(Math.max(0.01,d/pinchStartDist));
+      const newZoom=Math.max(9,Math.min(17,pinchStartZoom+delta));
+      const mid=midpoint(pts[0],pts[1]);
+      zoomAt(newZoom,mid.x-mapEl.getBoundingClientRect().left,mid.y-mapEl.getBoundingClientRect().top);
+    }
+    return;
+  }
+
   if(!dragging)return;
-  const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};
+  const dx=e.clientX-last.x,dy=e.clientY-last.y;
+  last={x:e.clientX,y:e.clientY};
   const c=project(center.lat,center.lng,zoom);
   const n=unproject(c.x-dx,c.y-dy,zoom);
-  center={lat:n.lat,lng:n.lng};renderMap();
+  center={lat:n.lat,lng:n.lng};
+  renderMap();
 });
-mapEl.addEventListener("pointerup",e=>{dragging=false;mapEl.classList.remove("dragging")});
-mapEl.addEventListener("pointercancel",()=>{dragging=false;mapEl.classList.remove("dragging")});
+
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if(pointers.size<2)pinchStartDist=0;
+  if(pointers.size===1){
+    const p=[...pointers.values()][0];
+    dragging=true;last={x:p.x,y:p.y};
+  }else{
+    dragging=false;
+  }
+  if(pointers.size===0)mapEl.classList.remove("dragging");
+  try{mapEl.releasePointerCapture(e.pointerId)}catch(_){}
+}
+mapEl.addEventListener("pointerup",endPointer);
+mapEl.addEventListener("pointercancel",endPointer);
+mapEl.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse" && !pointers.has(e.pointerId))return;});
+
+mapEl.addEventListener("dblclick",e=>{
+  e.preventDefault();
+  zoomAt(zoom+1,e.offsetX,e.offsetY);
+});
+
+document.getElementById("mapPlus").onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
+document.getElementById("mapMinus").onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
+document.getElementById("mapReset").onclick=()=>{zoom=11;center={lat:13.505,lng:144.800};renderMap();};
 window.addEventListener("resize",renderMap);
+
 applyFilters();
 </script></body></html>

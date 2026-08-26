@@ -22,3 +22,6 @@ Guam Family Travel MAP — リアル詳細MAP版
 
 
 【MAP同期修正】OpenStreetMap iframe上に固定ピンを重ねる方式を廃止。OSMタイルを直接描画し、Web Mercator座標で地図と店舗ピンを同じ座標系で計算。スワイプ移動・＋−ズーム・ピン位置が完全連動。外部Leaflet等のJSライブラリ不要。
+
+
+【iPhone操作修正】1本指スワイプ=地図移動、2本指ピンチ=拡大縮小、ダブルタップ=拡大、＋/−ボタンも使用可能。地図と店舗ピンは同じWeb Mercator座標で同期。
