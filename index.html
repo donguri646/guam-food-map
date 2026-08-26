@@ -16,11 +16,14 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
 .pin{width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#078d86;border:3px solid #fff;box-shadow:0 2px 7px #0005;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:9px}.pin span{transform:rotate(45deg)}
 </style>
 <style>
-.mapWrap{position:relative;height:520px;overflow:hidden;background:#c9e8ee;touch-action:none}
-.tileMap{position:absolute;inset:0;overflow:hidden;background:#c9e8ee;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;user-select:none;-webkit-touch-callout:none}
+.mapWrap{position:relative;height:520px;overflow:hidden;background:#c9e8ee}
+.tileMap{position:absolute;inset:0;overflow:hidden;background:#c9e8ee;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tileMap.dragging{cursor:grabbing}
+.mapWorld{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;will-change:transform;pointer-events:none}
+.tileLayer{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+.tileSet{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;will-change:opacity}
 .tile{position:absolute;width:256px;height:256px;user-select:none;-webkit-user-drag:none;pointer-events:none}
-.pinLayer{position:absolute;inset:0;pointer-events:none;will-change:transform}
+.pinLayer{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;will-change:contents}
 .mapPin{position:absolute;transform:translate(-50%,-100%);width:28px;height:34px;border:2px solid #fff;border-radius:50% 50% 50% 0;background:#078d86;color:#fff;box-shadow:0 2px 6px #0006;pointer-events:auto;padding:0;z-index:20;cursor:pointer}
 .mapPin span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:9px;font-weight:900;transform:rotate(45deg)}
 .mapStatus{position:absolute;left:12px;top:12px;right:12px;display:flex;justify-content:space-between;z-index:30;pointer-events:none}
@@ -43,8 +46,12 @@ header{padding:14px 16px 10px;background:linear-gradient(135deg,#078d86,#0aa99f)
 <div id="activeNote" class="activeNote">📍 すべての店舗</div>
 
 <div class="mapWrap" id="mapWrap">
-  <div id="tileMap" class="tileMap" aria-label="Guam detailed map"></div>
-  <div id="pinLayer" class="pinLayer"></div>
+  <div id="tileMap" class="tileMap" aria-label="Guam detailed map">
+    <div id="mapWorld" class="mapWorld">
+      <div id="tileLayer" class="tileLayer"></div>
+      <div id="pinLayer" class="pinLayer"></div>
+    </div>
+  </div>
   <div class="mapStatus"><span>🗺️ 実際の道路MAP</span><span>📍 1ピン＝1店舗</span></div>
   <div class="mapHint">👆 スワイプで移動　・　ピンをタップ</div>
   <button id="mapMinus" class="mapBtn minus" type="button">−</button>
@@ -67,299 +74,200 @@ const DATA=[{"id":1,"name":"The Kracked Egg","meal":"朝食","menu":"エッグ�
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let current=DATA;
 
-
-
-const mapEl=document.getElementById("tileMap");
-const pinEl=document.getElementById("pinLayer");
-let zoom=11, center={lat:13.505,lng:144.800};
-let dragging=false,last={x:0,y:0},pointers=new Map();
-let pinchStartDist=0,pinchBaseZoom=11,pinchBaseCenter={...center},pinchMid={x:0,y:0};
-let tileKey="", gestureScale=1;
+const mapEl=document.getElementById('tileMap');
+const worldEl=document.getElementById('mapWorld');
+const tileLayer=document.getElementById('tileLayer');
+const pinEl=document.getElementById('pinLayer');
+let zoom=12;
+let center={lat:13.505,lng:144.800};
+let dragging=false,last={x:0,y:0};
+let pointers=new Map();
+let pinchStartDist=0,pinchLastScale=1,pinchBaseZoom=12,pinchBaseCenter={...center},pinchMid={x:0,y:0},pinchBaseTransform={ox:0,oy:0};
+let tileKey='', tileSetId=0;
 
 function clampLat(lat){return Math.max(-85.05112878,Math.min(85.05112878,lat));}
 function worldSize(z){return 256*Math.pow(2,z);}
 function project(lat,lng,z=zoom){
-  const n=worldSize(z), la=clampLat(lat)*Math.PI/180;
+  const n=worldSize(z),la=clampLat(lat)*Math.PI/180;
   return {x:(lng+180)/360*n,y:(1-Math.asinh(Math.tan(la))/Math.PI)/2*n};
 }
 function unproject(x,y,z=zoom){
-  const n=worldSize(z),lng=x/n*360-180, yy=Math.PI*(1-2*y/n);
+  const n=worldSize(z),lng=x/n*360-180,yy=Math.PI*(1-2*y/n);
   return {lng,lat:180/Math.PI*Math.atan(Math.sinh(yy))};
 }
 function tileUrl(x,y,z){
-  const n=2**z; x=((x%n)+n)%n;
+  const n=2**z;x=((x%n)+n)%n;
   return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 }
-function ensureLayer(){
-  let l=document.getElementById("tileLayer");
-  if(!l){
-    l=document.createElement("div");l.id="tileLayer";
-    l.style.cssText="position:absolute;inset:0;will-change:transform;pointer-events:none;transform-origin:0 0;";
-    mapEl.appendChild(l);
-  }
-  return l;
+function viewportTransform(){
+  const c=project(center.lat,center.lng,zoom);
+  return {ox:mapEl.clientWidth/2-c.x,oy:mapEl.clientHeight/2-c.y};
 }
-function rebuildTiles(){
-  const l=ensureLayer(),c=project(center.lat,center.lng,zoom);
-  const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256),key=zoom+":"+tx+":"+ty;
-  if(key===tileKey)return;
-  const next=document.createElement("div");
-  next.style.cssText="position:absolute;inset:0;will-change:transform;pointer-events:none;";
-  next.dataset.key=key;
-  for(let yy=ty-3;yy<=ty+3;yy++){
-    for(let xx=tx-3;xx<=tx+3;xx++){
-      const img=new Image();img.draggable=false;img.className="tile";
-      img.src=tileUrl(xx,yy,zoom);
-      img.style.left=(xx*256)+"px";img.style.top=(yy*256)+"px";
-      next.appendChild(img);
-    }
-  }
-  // Keep old tiles visible until at least one new tile is loaded.
-  let swapped=false;
+function setWorldTransform(ox,oy,scale=1){
+  worldEl.style.transformOrigin='0 0';
+  worldEl.style.transform=`translate3d(${ox}px,${oy}px,0) scale(${scale})`;
+}
+function setPinchTransform(scale){
+  const m=pinchMid,b=pinchBaseTransform;
+  worldEl.style.transformOrigin='0 0';
+  worldEl.style.transform=`translate3d(${m.x}px,${m.y}px,0) scale(${scale}) translate3d(${b.ox-m.x}px,${b.oy-m.y}px,0)`;
+}
+function rebuildTiles(force=false){
+  const c=project(center.lat,center.lng,zoom);
+  const tx=Math.floor(c.x/256),ty=Math.floor(c.y/256);
+  const key=`${zoom}:${tx}:${ty}`;
+  if(!force && key===tileKey)return;
+  const set=document.createElement('div');
+  set.className='tileSet';
+  set.dataset.key=key;
+  const id=++tileSetId;
+  let loaded=0,swapped=false;
   const swap=()=>{
     if(swapped)return;swapped=true;
-    next.style.opacity="1";
-    const old=[...l.children];
-    l.appendChild(next);
-    old.forEach(x=>{if(x!==next)x.remove();});
+    set.style.opacity='1';
+    [...tileLayer.children].forEach(ch=>ch.style.opacity='0');
+    tileLayer.appendChild(set);
+    setTimeout(()=>{[...tileLayer.children].forEach(ch=>{if(ch!==set)ch.remove()})},120);
     tileKey=key;
   };
-  const first=next.querySelector("img");
-  if(first){
-    first.onload=swap;
-    first.onerror=swap;
-  }else swap();
-  // Never leave the map blank if the network is slow.
-  setTimeout(swap,1200);
+  for(let yy=ty-3;yy<=ty+3;yy++)for(let xx=tx-3;xx<=tx+3;xx++){
+    const img=new Image();img.className='tile';img.draggable=false;img.alt='';
+    img.style.left=(xx*256)+'px';img.style.top=(yy*256)+'px';
+    img.src=tileUrl(xx,yy,zoom);
+    img.onload=()=>{loaded++;if(loaded===1)swap()};
+    img.onerror=()=>{loaded++;if(loaded===1)swap()};
+    set.appendChild(img);
+  }
+  set.style.opacity='0';
+  // Keep previous set visible until the first new tile arrives.
+  tileLayer.appendChild(set);
+  setTimeout(()=>{if(!swapped)swap()},1800);
 }
-function updateTransform(){
-  const w=mapEl.clientWidth,h=mapEl.clientHeight;
-  if(!w||!h)return;
-  const c=project(center.lat,center.lng,zoom);
-  const ox=w/2-c.x,oy=h/2-c.y;
-  const l=ensureLayer();
-  l.style.transform=`translate3d(${ox}px,${oy}px,0)`;
-  renderPins();
-}
-function renderMap(){rebuildTiles();updateTransform();}
 function renderPins(){
-  const w=mapEl.clientWidth,h=mapEl.clientHeight,c=project(center.lat,center.lng,zoom);
-  pinEl.innerHTML="";
+  pinEl.innerHTML='';
   current.forEach(d=>{
     if(d.lat==null||d.lng==null)return;
-    const p=project(Number(d.lat),Number(d.lng),zoom);
-    const x=p.x-c.x+w/2,y=p.y-c.y+h/2;
-    if(x<-50||x>w+50||y<-70||y>h+30)return;
-    const i=DATA.indexOf(d),b=document.createElement("button");
-    b.className="mapPin";b.type="button";b.title=d.name;
-    b.style.left=x+"px";b.style.top=y+"px";
-    b.innerHTML="<span>"+(i+1)+"</span>";
-    b.onclick=e=>{e.stopPropagation();focusStore(i);};
+    const p=project(Number(d.lat),Number(d.lng),zoom),i=DATA.indexOf(d);
+    const b=document.createElement('button');b.className='mapPin';b.type='button';b.title=d.name;
+    b.style.left=p.x+'px';b.style.top=p.y+'px';
+    b.innerHTML='<span>'+((i+1))+'</span>';
+    b.onclick=e=>{e.stopPropagation();focusStore(i)};
     pinEl.appendChild(b);
   });
+}
+function renderMap(forceTiles=false){
+  const t=viewportTransform();
+  setWorldTransform(t.ox,t.oy,1);
+  rebuildTiles(forceTiles);renderPins();
 }
 function zoomAt(newZoom,px,py){
   const nz=Math.max(9,Math.min(17,Math.round(newZoom)));
   if(nz===zoom)return;
-  const c=project(center.lat,center.lng,zoom);
-  const anchor=unproject(c.x+(px-mapEl.clientWidth/2),c.y+(py-mapEl.clientHeight/2),zoom);
-  zoom=nz;
-  const a=project(anchor.lat,anchor.lng,zoom);
-  center=unproject(a.x-(px-mapEl.clientWidth/2),a.y-(py-mapEl.clientHeight/2),zoom);
-  tileKey="";renderMap();
-}
-function applyPinchScale(scale,mid){
-  // Render only integer zoom levels. Fractional pinch is represented by a CSS scale,
-  // so tile URLs are always valid and the map never blanks.
-  const raw=Math.max(9,Math.min(17,pinchBaseZoom+Math.log2(scale)));
-  const integer=Math.max(9,Math.min(17,Math.round(raw)));
-  const frac=Math.pow(2,raw-integer);
-  zoom=integer;
-  gestureScale=frac;
-  const l=ensureLayer();
-  const c=project(center.lat,center.lng,zoom);
-  const ox=mapEl.clientWidth/2-c.x,oy=mapEl.clientHeight/2-c.y;
-  l.style.transform=`translate3d(${ox}px,${oy}px,0) scale(${frac})`;
-  l.style.transformOrigin=`${mid.x}px ${mid.y}px`;
-  // Pins follow the same temporary scale.
-  pinEl.style.transform=`translate3d(${(1-frac)*mid.x}px,${(1-frac)*mid.y}px,0) scale(${frac})`;
-  if(integer!==pinchBaseZoom){tileKey="";rebuildTiles();}
-}
-function finishPinch(){
-  if(!gestureScale)return;
-  const l=ensureLayer();
-  const scale=gestureScale,mid=pinchMid;
-  // Convert the visual scale into a stable integer zoom centered at the pinch midpoint.
-  const c=project(center.lat,center.lng,zoom);
-  const wx=c.x+(mid.x-mapEl.clientWidth/2)/scale;
-  const wy=c.y+(mid.y-mapEl.clientHeight/2)/scale;
+  const old=viewportTransform();
+  const wx=(px-old.ox),wy=(py-old.oy);
   const anchor=unproject(wx,wy,zoom);
-  const nz=Math.max(9,Math.min(17,Math.round(zoom+Math.log2(scale))));
-  const a=project(anchor.lat,anchor.lng,nz);
-  center=unproject(a.x-(mid.x-mapEl.clientWidth/2),a.y-(mid.y-mapEl.clientHeight/2),nz);
-  zoom=nz;gestureScale=1;pinEl.style.transform="none";l.style.transformOrigin="0 0";tileKey="";renderMap();
+  zoom=nz;
+  const np=project(anchor.lat,anchor.lng,zoom);
+  center=unproject(np.x-(px-mapEl.clientWidth/2),np.y-(py-mapEl.clientHeight/2),zoom);
+  renderMap(true);
 }
-
-mapEl.addEventListener("wheel",e=>{e.preventDefault();zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY)},{passive:false});
-mapEl.addEventListener("pointerdown",e=>{
+function pinchMove(scale){
+  const s=Math.max(.65,Math.min(2.6,scale));
+  pinchLastScale=s;
+  // Scale the SAME world that contains both tiles and pins, around the exact pinch midpoint.
+  setPinchTransform(s);
+}
+function beginPinch(){
+  const pts=[...pointers.values()];
+  pinchStartDist=Math.max(1,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
+  pinchLastScale=1;
+  pinchBaseZoom=zoom;pinchBaseCenter={...center};pinchBaseTransform=viewportTransform();
+  const r=mapEl.getBoundingClientRect();pinchMid={x:(pts[0].x+pts[1].x)/2-r.left,y:(pts[0].y+pts[1].y)/2-r.top};
+}
+mapEl.addEventListener('wheel',e=>{e.preventDefault();zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY)},{passive:false});
+mapEl.addEventListener('pointerdown',e=>{
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  try{mapEl.setPointerCapture(e.pointerId)}catch(_){}
-  if(pointers.size===1){dragging=true;last={x:e.clientX,y:e.clientY};mapEl.classList.add("dragging");}
-  else if(pointers.size===2){
-    const pts=[...pointers.values()];
-    pinchStartDist=Math.max(1,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
-    pinchBaseZoom=zoom;pinchBaseCenter={...center};pinchMid={x:(pts[0].x+pts[1].x)/2-mapEl.getBoundingClientRect().left,y:(pts[0].y+pts[1].y)/2-mapEl.getBoundingClientRect().top};
-    dragging=false;
-  }
+  try{mapEl.setPointerCapture(e.pointerId)}catch(_){ }
+  if(pointers.size===1){dragging=true;last={x:e.clientX,y:e.clientY};mapEl.classList.add('dragging');}
+  else if(pointers.size===2){dragging=false;beginPinch();}
 });
-mapEl.addEventListener("pointermove",e=>{
+mapEl.addEventListener('pointermove',e=>{
   if(!pointers.has(e.pointerId))return;
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pointers.size>=2){
     const pts=[...pointers.values()],d=Math.max(1,Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y));
-    pinchMid={x:(pts[0].x+pts[1].x)/2-mapEl.getBoundingClientRect().left,y:(pts[0].y+pts[1].y)/2-mapEl.getBoundingClientRect().top};
-    applyPinchScale(d/pinchStartDist,pinchMid);
-    return;
+    pinchMove(d/pinchStartDist);return;
   }
   if(!dragging)return;
   const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};
   const c=project(center.lat,center.lng,zoom),n=unproject(c.x-dx,c.y-dy,zoom);
-  center={lat:n.lat,lng:n.lng};updateTransform();
+  center={lat:n.lat,lng:n.lng};
+  const t=viewportTransform();setWorldTransform(t.ox,t.oy,1);
+  renderPins();
+  // Refresh tiles only after crossing into a new tile area; never rebuild during the gesture itself.
+  rebuildTiles(false);
 });
+function finishPinch(){
+  if(!pinchStartDist)return;
+  const s=pinchLastScale;
+  const m=pinchMid,b=pinchBaseTransform;
+  // The geographic point under the pinch midpoint in the base view is fixed.
+  const anchor=unproject(m.x-b.ox,m.y-b.oy,pinchBaseZoom);
+  const rawZoom=pinchBaseZoom+Math.log2(s);
+  const nz=Math.max(9,Math.min(17,Math.round(rawZoom)));
+  zoom=nz;
+  const np=project(anchor.lat,anchor.lng,zoom);
+  center=unproject(np.x-(m.x-mapEl.clientWidth/2),np.y-(m.y-mapEl.clientHeight/2),zoom);
+  pinchStartDist=0;pinchLastScale=1;tileKey='';
+  renderMap(true);
+}
 function endPointer(e){
   pointers.delete(e.pointerId);
-  if(pointers.size===0){
-    if(gestureScale!==1)finishPinch();
-    dragging=false;mapEl.classList.remove("dragging");
+  if(pointers.size===1 && pinchStartDist){
+    // Normalize the map before continuing with a one-finger drag.
+    finishPinch();
+    const p=[...pointers.values()][0];dragging=true;last={x:p.x,y:p.y};
+  }else if(pointers.size===0){
+    if(pinchStartDist)finishPinch();
+    dragging=false;mapEl.classList.remove('dragging');
   }else if(pointers.size===1){
     const p=[...pointers.values()][0];dragging=true;last={x:p.x,y:p.y};
   }
-  try{mapEl.releasePointerCapture(e.pointerId)}catch(_){}
+  try{mapEl.releasePointerCapture(e.pointerId)}catch(_){ }
 }
-mapEl.addEventListener("pointerup",endPointer);
-mapEl.addEventListener("pointercancel",endPointer);
-mapEl.addEventListener("dblclick",e=>{e.preventDefault();zoomAt(zoom+1,e.offsetX,e.offsetY);});
-document.getElementById("mapPlus").onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById("mapMinus").onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById("mapReset").onclick=()=>{zoom=11;center={lat:13.505,lng:144.800};tileKey="";renderMap();};
-window.addEventListener("resize",()=>{tileKey="";renderMap();});
+mapEl.addEventListener('pointerup',endPointer);mapEl.addEventListener('pointercancel',endPointer);
+mapEl.addEventListener('dblclick',e=>{e.preventDefault();zoomAt(zoom+1,e.offsetX,e.offsetY)});
+document.getElementById('mapPlus').onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
+document.getElementById('mapMinus').onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
+document.getElementById('mapReset').onclick=()=>{zoom=12;center={lat:13.505,lng:144.800};tileKey='';renderMap(true)};
+window.addEventListener('resize',()=>renderMap(true));
+
 function focusStore(i){
   const d=DATA[i];
-  if(d.lat&&d.lng){
-    zoom=16;center={lat:Number(d.lat),lng:Number(d.lng)};
-    renderMap();
-  }
+  if(d.lat&&d.lng){zoom=15;center={lat:Number(d.lat),lng:Number(d.lng)};tileKey='';renderMap(true)}
   showDetail(i);
 }
 function showDetail(i){
   const d=DATA[i],photos=[d.image,d.image2,d.image3].filter(Boolean);
-  const favs=JSON.parse(localStorage.getItem("guamFavs")||"[]"),isFav=favs.includes(i);
-  const gallery=photos.length?'<div class="gallery">'+photos.map((u,n)=>'<div class="slide"><img src="'+esc(u)+'" loading="'+(n?'lazy':'eager')+'" onerror="this.parentElement.style.display=\'none\'"><span class="cap">'+(n+1)+' / '+photos.length+'</span></div>').join("")+'</div>':"";
-  const site=d.official?'<a class="site" href="'+esc(d.official)+'" target="_blank" rel="noopener">🌐 公式サイト</a>':"";
-  document.getElementById("detail").innerHTML='<div class="card">'+gallery+'<div class="body"><button class="fav" id="favBtn">'+(isFav?"❤️ 保存済み":"♡ お気に入り")+'</button><div class="badge">'+esc(d.meal||"おすすめ")+"　"+esc(d.genre||"グルメ")+'</div><h2>'+esc(d.name)+'</h2><div class="price">💰 '+esc(d.price||"価格は店舗で確認")+'</div><p>📍 '+esc(d.area||"グアム")+'</p><h3>🍴 おすすめ料理</h3><p>'+esc(d.menu||"おすすめメニュー")+'</p><h3>💡 どんな料理？</h3><p>'+esc(d.comment||"料理の特徴やおすすめポイントを掲載しています。")+'</p><div class="actions">'+site+'<a class="maps" href="'+esc(d.maps||"#")+'" target="_blank" rel="noopener">📍 Google Maps</a></div></div></div>';
-  document.getElementById("favBtn").onclick=()=>{const a=JSON.parse(localStorage.getItem("guamFavs")||"[]"),n=a.includes(i)?a.filter(x=>x!==i):[...a,i];localStorage.setItem("guamFavs",JSON.stringify(n));showDetail(i)};
-  document.getElementById("detail").scrollIntoView({behavior:"smooth",block:"start"});
+  const favs=JSON.parse(localStorage.getItem('guamFavs')||'[]'),isFav=favs.includes(i);
+  const gallery=photos.length?'<div class="gallery">'+photos.map((u,n)=>'<div class="slide"><img src="'+esc(u)+'" loading="'+(n?'lazy':'eager')+'" onerror="this.parentElement.style.display=\'none\'"><span class="cap">'+(n+1)+' / '+photos.length+'</span></div>').join('')+'</div>':'';
+  const site=d.official?'<a class="site" href="'+esc(d.official)+'" target="_blank" rel="noopener">🌐 公式サイト</a>':'';
+  document.getElementById('detail').innerHTML='<div class="card">'+gallery+'<div class="body"><button class="fav" id="favBtn">'+(isFav?'❤️ 保存済み':'♡ お気に入り')+'</button><div class="badge">'+esc(d.meal||'おすすめ')+'　'+esc(d.genre||'グルメ')+'</div><h2>'+esc(d.name)+'</h2><div class="price">💰 '+esc(d.price||'価格は店舗で確認')+'</div><p>📍 '+esc(d.area||'グアム')+'</p><h3>🍴 おすすめ料理</h3><p>'+esc(d.menu||'おすすめメニュー')+'</p><h3>💡 どんな料理？</h3><p>'+esc(d.comment||'料理の特徴やおすすめポイントを掲載しています。')+'</p><div class="actions">'+site+'<a class="maps" href="'+esc(d.maps||'#')+'" target="_blank" rel="noopener">📍 Google Maps</a></div></div></div>';
+  document.getElementById('favBtn').onclick=()=>{const a=JSON.parse(localStorage.getItem('guamFavs')||'[]'),n=a.includes(i)?a.filter(x=>x!==i):[...a,i];localStorage.setItem('guamFavs',JSON.stringify(n));showDetail(i)};
+  document.getElementById('detail').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderList(){
-  const list=document.getElementById("list");list.innerHTML="";
-  document.getElementById("count").textContent=current.length+"店舗";
-  current.forEach(d=>{
-    const i=DATA.indexOf(d),b=document.createElement("button");b.className="item";
-    const photo=d.image?'<img class="thumb" src="'+esc(d.image)+'" loading="lazy">':'<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:25px">🍴</div>';
-    b.innerHTML='<div class="itemTop">'+photo+'<div><b>'+esc(d.name)+'</b><small>'+esc(d.area||"グアム")+'　•　'+esc(d.price||"")+'</small></div></div><div class="tags"><span class="tag">'+esc(d.genre||"グルメ")+'</span>'+(d.family?'<span class="tag">👨‍👩‍👧‍👦 子連れ◎</span>':"")+'</div><small>'+esc(d.menu||"おすすめ料理")+'</small>';
-    b.onclick=()=>focusStore(i);list.appendChild(b);
-  });
+  const list=document.getElementById('list');list.innerHTML='';document.getElementById('count').textContent=current.length+'店舗';
+  current.forEach(d=>{const i=DATA.indexOf(d),b=document.createElement('button');b.className='item';const photo=d.image?'<img class="thumb" src="'+esc(d.image)+'" loading="lazy">':'<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:25px">🍴</div>';b.innerHTML='<div class="itemTop">'+photo+'<div><b>'+esc(d.name)+'</b><small>'+esc(d.area||'グアム')+'　•　'+esc(d.price||'')+'</small></div></div><div class="tags"><span class="tag">'+esc(d.genre||'グルメ')+'</span>'+(d.family?'<span class="tag">👨‍👩‍👧‍👦 子連れ◎</span>':'')+'</div><small>'+esc(d.menu||'おすすめ料理')+'</small>';b.onclick=()=>focusStore(i);list.appendChild(b)});
 }
 function applyFilters(){
-  const meal=document.querySelector("[data-meal].active")?.dataset.meal||"all",q=document.querySelector(".qf.active")?.dataset.q||"all",favs=JSON.parse(localStorage.getItem("guamFavs")||"[]");
-  current=DATA.filter((d,i)=>(meal==="all"||d.meal===meal)&&(q==="all"||(q==="family"&&d.family)||(q==="local"&&d.local)||(q==="photo"&&d.image)||(q==="fav"&&favs.includes(i))));
-  const labels={all:"すべての店舗",朝食:"朝食のお店",ランチ:"ランチのお店",ディナー:"ディナーのお店"};
-  document.getElementById("activeNote").textContent="📍 "+labels[meal]+"（"+current.length+"店舗）";
-  renderList();renderMap();
+  const meal=document.querySelector('[data-meal].active')?.dataset.meal||'all',q=document.querySelector('.qf.active')?.dataset.q||'all',favs=JSON.parse(localStorage.getItem('guamFavs')||'[]');
+  current=DATA.filter((d,i)=>(meal==='all'||d.meal===meal)&&(q==='all'||(q==='family'&&d.family)||(q==='local'&&d.local)||(q==='photo'&&d.image)||(q==='fav'&&favs.includes(i))));
+  const labels={all:'すべての店舗',朝食:'朝食のお店',ランチ:'ランチのお店',ディナー:'ディナーのお店'};
+  document.getElementById('activeNote').textContent='📍 '+labels[meal]+'（'+current.length+'店舗）';renderList();renderMap(true);
 }
-
-document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-tab]").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.tab).classList.add("active")});
-document.querySelectorAll("[data-meal]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-meal]").forEach(x=>x.classList.remove("active"));b.classList.add("active");applyFilters()});
-document.querySelectorAll(".qf").forEach(b=>b.onclick=()=>{document.querySelectorAll(".qf").forEach(x=>x.classList.remove("active"));b.classList.add("active");applyFilters()});
-
-document.getElementById("mapPlus").onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById("mapMinus").onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById("mapReset").onclick=()=>{zoom=11;center={lat:13.505,lng:144.800};renderMap();};
-
-function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
-function midpoint(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
-
-mapEl.addEventListener("wheel",e=>{
-  e.preventDefault();
-  zoomAt(zoom+(e.deltaY<0?1:-1),e.offsetX,e.offsetY);
-},{passive:false});
-
-mapEl.addEventListener("pointerdown",e=>{
-  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  try{mapEl.setPointerCapture(e.pointerId)}catch(_){}
-  if(pointers.size===1){
-    dragging=true;
-    last={x:e.clientX,y:e.clientY};
-    mapEl.classList.add("dragging");
-  }else if(pointers.size===2){
-    const pts=[...pointers.values()];
-    pinchStartDist=distance(pts[0],pts[1]);
-    pinchStartZoom=zoom;
-    pinchStartCenter={...center};
-    dragging=false;
-  }
-});
-
-mapEl.addEventListener("pointermove",e=>{
-  if(!pointers.has(e.pointerId))return;
-  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-
-  if(pointers.size>=2){
-    const pts=[...pointers.values()];
-    const d=distance(pts[0],pts[1]);
-    if(pinchStartDist>0){
-      const delta=Math.log2(Math.max(0.01,d/pinchStartDist));
-      const newZoom=Math.max(9,Math.min(17,pinchStartZoom+delta));
-      const mid=midpoint(pts[0],pts[1]);
-      zoomAt(newZoom,mid.x-mapEl.getBoundingClientRect().left,mid.y-mapEl.getBoundingClientRect().top);
-    }
-    return;
-  }
-
-  if(!dragging)return;
-  const dx=e.clientX-last.x,dy=e.clientY-last.y;
-  last={x:e.clientX,y:e.clientY};
-  const c=project(center.lat,center.lng,zoom);
-  const n=unproject(c.x-dx,c.y-dy,zoom);
-  center={lat:n.lat,lng:n.lng};
-  renderMap();
-});
-
-function endPointer(e){
-  pointers.delete(e.pointerId);
-  if(pointers.size<2)pinchStartDist=0;
-  if(pointers.size===1){
-    const p=[...pointers.values()][0];
-    dragging=true;last={x:p.x,y:p.y};
-  }else{
-    dragging=false;
-  }
-  if(pointers.size===0)mapEl.classList.remove("dragging");
-  try{mapEl.releasePointerCapture(e.pointerId)}catch(_){}
-}
-mapEl.addEventListener("pointerup",endPointer);
-mapEl.addEventListener("pointercancel",endPointer);
-mapEl.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse" && !pointers.has(e.pointerId))return;});
-
-mapEl.addEventListener("dblclick",e=>{
-  e.preventDefault();
-  zoomAt(zoom+1,e.offsetX,e.offsetY);
-});
-
-document.getElementById("mapPlus").onclick=()=>zoomAt(zoom+1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById("mapMinus").onclick=()=>zoomAt(zoom-1,mapEl.clientWidth/2,mapEl.clientHeight/2);
-document.getElementById("mapReset").onclick=()=>{zoom=11;center={lat:13.505,lng:144.800};renderMap();};
-window.addEventListener("resize",renderMap);
-
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.tab).classList.add('active');if(b.dataset.tab==='food')setTimeout(()=>renderMap(true),30)});
+document.querySelectorAll('[data-meal]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-meal]').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters()});
+document.querySelectorAll('.qf').forEach(b=>b.onclick=()=>{document.querySelectorAll('.qf').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters()});
 applyFilters();
 </script></body></html>
